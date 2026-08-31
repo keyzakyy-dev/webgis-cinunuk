@@ -1,0 +1,206 @@
+.mapwrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #e8ecf0;
+  overflow: hidden;
+}
+
+.mapwrap__map {
+  width: 100%;
+  height: 100%;
+}
+
+.mapwrap__tiles {
+  /* Basemap CARTO light sudah minimalis — tanpa CSS filter agar pan/zoom GPU-accelerated */
+}
+
+.mapwrap__popup {
+  font-family: var(--sans);
+  color: var(--text);
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+.mapwrap__popup-media {
+  position: relative;
+  height: 110px;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 80% at 70% 25%, color-mix(in srgb, var(--accent) 55%, transparent) 0%, transparent 60%),
+    linear-gradient(140deg, color-mix(in srgb, var(--accent) 30%, #e7e5e4) 0%, #f5f5f4 100%);
+}
+
+.mapwrap__popup-media::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--accent);
+}
+
+.mapwrap__popup-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mapwrap__popup-body {
+  padding: 0.85rem 0.95rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mapwrap__popup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-mid);
+}
+
+.mapwrap__popup-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.mapwrap__popup-title {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.mapwrap__popup-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-mid);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mapwrap__popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+
+.mapwrap__popup-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.mapwrap__popup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.9rem;
+  background: #292524;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--sans);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.mapwrap__popup-btn:hover {
+  background: #4a4a4a;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+/* Leaflet popup chrome */
+.mapwrap__map .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  background: transparent;
+}
+
+.mapwrap__map .leaflet-popup-content {
+  width: 268px !important;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mapwrap__map .leaflet-popup-tip {
+  background: #fff;
+}
+
+.mapwrap__controls {
+  position: absolute;
+  bottom: 18px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapwrap__controls button {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.mapwrap__controls button:hover {
+  background: var(--primary-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+}
+
+.mapwrap__controls button:active {
+  transform: translateY(0) scale(0.96);
+}
+
+@media (max-width: 900px) {
+  .mapwrap__controls {
+    right: auto;
+    left: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    flex-direction: row;
+    gap: 8px;
+  }
+}

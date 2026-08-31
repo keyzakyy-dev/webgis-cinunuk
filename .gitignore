@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+logs/
+*.txt.log
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Uploads (user-generated)
+backend/public/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temp / scratch
+.pytest_cache/
+__pycache__/
+*.pyc

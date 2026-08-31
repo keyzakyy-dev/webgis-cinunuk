@@ -1,0 +1,134 @@
+.marquee {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.marquee__label {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  background: var(--primary-soft);
+}
+
+.marquee__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #292524;
+  animation: marqueePulse 1.8s ease-in-out infinite;
+}
+
+.marquee__viewport {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.marquee__viewport::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  background: linear-gradient(to right, transparent, #fff);
+  pointer-events: none;
+}
+
+.marquee__track {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  white-space: nowrap;
+  animation: marqueeScroll 30s linear infinite;
+}
+
+.marquee__viewport:hover .marquee__track {
+  animation-play-state: paused;
+}
+
+.marquee__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.marquee__item:hover {
+  color: #292524;
+  text-decoration: none;
+}
+
+.marquee__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.marquee__cat {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marqueePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
+  }
+  .marquee__pulse {
+    animation: none;
+  }
+  .marquee__viewport {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .marquee__label {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.66rem;
+  }
+  .marquee__cat {
+    display: none;
+  }
+}

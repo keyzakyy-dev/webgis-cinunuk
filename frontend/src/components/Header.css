@@ -1,0 +1,112 @@
+.header {
+  position: relative;
+}
+
+.header__main {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.header__main-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.7rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.header__logo-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.header__identity {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.header__identity strong {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+
+.header__identity small {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ── Pill / chip navigation ─────────────────────────────── */
+
+.header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.header__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--text-mid);
+  background: var(--primary-soft);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.header__chip:hover {
+  color: var(--text);
+  border-color: var(--muted);
+  text-decoration: none;
+}
+
+.header__chip:active {
+  transform: scale(0.97);
+}
+
+.header__chip--active,
+.header__chip--active:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .header__identity small {
+    display: none;
+  }
+
+  .header__main-inner {
+    gap: 0.5rem;
+  }
+
+  .header__chip {
+    padding: 0.45rem 0.95rem;
+    font-size: 0.85rem;
+  }
+}

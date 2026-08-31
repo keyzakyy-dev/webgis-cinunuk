@@ -1,0 +1,125 @@
+.lshow {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lshow__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.5rem 1.75rem 1.25rem;
+}
+
+.lshow__title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.lshow__hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.lshow__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 1.75rem 1.75rem;
+}
+
+.lshow__cell {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--c);
+  border-radius: 4px;
+  padding: 1rem 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+
+.lshow__cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.lshow__symbol {
+  width: 42px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c) 12%, white);
+}
+
+.lshow__symbol--polygon::before {
+  content: '';
+  width: 34px;
+  height: 24px;
+  background: color-mix(in srgb, var(--c) 16%, white);
+  border: 2px solid var(--c);
+  border-radius: 3px;
+}
+
+.lshow__symbol--marker::before {
+  content: '';
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent);
+}
+
+.lshow__symbol--line::before {
+  content: '';
+  width: 34px;
+  height: 0;
+  border-top: 3px solid var(--c);
+}
+
+.lshow__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.lshow__text strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lshow__text span {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .lshow__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .lshow__grid {
+    grid-template-columns: 1fr;
+    padding: 1rem 1.25rem 1.25rem;
+  }
+  .lshow__cell {
+    padding: 0.9rem 1rem;
+  }
+  .lshow__head {
+    padding: 1.25rem 1.25rem 1rem;
+  }
+}
