@@ -28,6 +28,22 @@ router.get('/', async (req, res) => {
       { label: 'Jaringan Jalan', nilai: String(byName['jalan'] ?? 0), satuan: 'Rute' },
     ];
 
+    const typeRows = await query(
+      `SELECT l.tipe, COUNT(f.id) AS jumlah
+       FROM layers l LEFT JOIN features f ON f.layer_id = l.id
+       GROUP BY l.tipe`
+    );
+
+    const byType = { polygon: 0, line: 0, point: 0 };
+    for (const r of typeRows) {
+      if (r.tipe && byType[r.tipe] !== undefined) byType[r.tipe] = Number(r.jumlah);
+    }
+
+    const categoryRows = await query(
+      `SELECT COALESCE(f.kategori, 'Lainnya') AS kategori, COUNT(f.id) AS jumlah
+       FROM features f GROUP BY kategori ORDER BY jumlah DESC LIMIT 6`
+    );
+
     res.json({
       success: true,
       data: {
@@ -36,6 +52,8 @@ router.get('/', async (req, res) => {
         totalFitur: Number(featureRow?.total || 0),
         titikLokasi: Number(pointRow?.total || 0),
         perLayer: groupRows,
+        byType,
+        byCategory: categoryRows,
         byName,
         statistik,
       },

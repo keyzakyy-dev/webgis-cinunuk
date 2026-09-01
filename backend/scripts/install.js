@@ -61,6 +61,7 @@ async function step1CreateTables() {
     CREATE TABLE IF NOT EXISTS features (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       layer_id INT UNSIGNED NOT NULL,
+      kategori VARCHAR(100) NULL,
       nama VARCHAR(200) NOT NULL,
       deskripsi TEXT NULL,
       deskripsi_lengkap TEXT NULL,
@@ -82,7 +83,18 @@ async function step1CreateTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
-  console.log('   Tabel users, layers, features siap.');
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS activity_logs (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_name VARCHAR(60) NOT NULL DEFAULT 'Admin',
+      action VARCHAR(100) NOT NULL,
+      details TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  console.log('   Tabel users, layers, features, activity_logs siap.');
 }
 
 async function step2SeedLayers() {

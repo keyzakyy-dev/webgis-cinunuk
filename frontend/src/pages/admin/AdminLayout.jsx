@@ -1,56 +1,51 @@
-import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import './admin.css';
 
 const ICON_DASH = (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
-    <rect x="3" y="3" width="7" height="9" rx="1" />
-    <rect x="14" y="3" width="7" height="5" rx="1" />
-    <rect x="14" y="12" width="7" height="9" rx="1" />
-    <rect x="3" y="16" width="7" height="5" rx="1" />
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+    <rect width="7" height="9" x="3" y="3" rx="1" />
+    <rect width="7" height="5" x="14" y="3" rx="1" />
+    <rect width="7" height="9" x="14" y="12" rx="1" />
+    <rect width="7" height="5" x="3" y="16" rx="1" />
   </svg>
 );
 
 const ICON_LAYERS = (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
-    <path d="M12 3 21 8 18 19 6 19 3 8Z" />
-    <path d="M12 3v16M3 8l9 4 9-4" />
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
   </svg>
 );
 
 const ICON_POI = (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
-    <path d="M12 21s-6-5.5-6-10a6 6 0 1 1 12 0c0 4.5-6 10-6 10Z" />
-    <circle cx="12" cy="11" r="2.3" />
-  </svg>
-);
-
-const ICON_IMPORT = (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="17 8 12 3 7 8" />
-    <line x1="12" y1="3" x2="12" y2="15" />
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
 const ICON_LOGOUT = (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
     <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
+    <line x1="21" x2="9" y1="12" y2="12" />
   </svg>
 );
 
 const NAV = [
   { to: '/admin', end: true, label: 'Dashboard', icon: ICON_DASH },
-  { to: '/admin/layers', label: 'Layers', icon: ICON_LAYERS },
-  { to: '/admin/features', label: 'Fitur / POI', icon: ICON_POI },
-  { to: '/admin/import', label: 'Import GeoJSON', icon: ICON_IMPORT },
+  { to: '/admin/layers', label: 'Layer Peta', icon: ICON_LAYERS },
+  { to: '/admin/features', label: 'Data Fitur & POI', icon: ICON_POI },
 ];
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!user) return <Navigate to="/admin/login" replace />;
 
@@ -61,31 +56,70 @@ export default function AdminLayout() {
 
   return (
     <div className="admin admin__shell">
-      <aside className="admin__sidebar">
+      {/* Mobile Top Appbar */}
+      <header className="admin__mobile-header">
+        <div className="admin__mobile-brand">
+          <img src="/images/logo-desa.png" alt="Logo" />
+          <span className="admin__mobile-title">SIG Cinunuk</span>
+        </div>
+        <button
+          type="button"
+          className="admin__mobile-toggle"
+          onClick={() => setMobileMenuOpen((v) => !v)}
+          aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? (
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="18" x2="20" y2="18" />
+            </svg>
+          )}
+        </button>
+      </header>
+
+      {/* Backdrop for mobile drawer */}
+      {mobileMenuOpen && (
+        <div className="admin__sidebar-backdrop" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Sidebar Drawer */}
+      <aside className={`admin__sidebar ${mobileMenuOpen ? 'admin__sidebar--open' : ''}`}>
         <div className="admin__sidebar-logo">
           <img src="/images/logo-desa.png" alt="Logo" />
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1>SIG Cinunuk</h1>
-            <small>Panel Admin</small>
+            <small>Panel Pengelola</small>
           </div>
         </div>
         <nav className="admin__nav">
           {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end}>
+            <NavLink
+              key={n.to}
+              to={n.to}
+              end={n.end}
+              onClick={() => setMobileMenuOpen(false)}
+            >
               <span className="admin__nav-icon" aria-hidden="true">{n.icon}</span>
               {n.label}
             </NavLink>
           ))}
         </nav>
-        <div className="admin__sidebar-footer" onClick={handleLogout}>
-          <span className="admin__nav-icon" aria-hidden="true" style={{ display: 'inline-grid', marginRight: '0.4rem', verticalAlign: '-3px' }}>
+        <div className="admin__sidebar-footer" onClick={handleLogout} title="Keluar">
+          <span className="admin__nav-icon" aria-hidden="true">
             {ICON_LOGOUT}
           </span>
-          Keluar ({user.username})
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            Keluar ({user.username})
+          </span>
         </div>
       </aside>
+
       <main className="admin__main">
-        <Outlet />
+        <Outlet key={location.pathname} />
       </main>
     </div>
   );

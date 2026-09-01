@@ -388,3 +388,78 @@
     max-height: 55vh;
   }
 }
+
+/* ── Layer Item Opacity Slider ──── */
+.layerpanel__item-wrap {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.layerpanel__opacity-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem 0.6rem 0.5rem;
+  background: var(--bg);
+  border-top: 1px dashed var(--border);
+}
+
+/* ── Radius Floating Panel ──── */
+.radiuspanel {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  z-index: 1000;
+}
+.radiuspanel__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.radiuspanel__btn svg {
+  color: var(--text);
+}
+.radiuspanel__btn:hover {
+  background: var(--primary-soft);
+}
+.radiuspanel__btn--active {
+  background: #18181b !important;
+  color: #fafafa !important;
+  border-color: #18181b !important;
+}
+.radiuspanel__btn--active svg {
+  color: #fafafa !important;
+}
+.radiuspanel__box {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  width: 190px;
+  color: var(--text);
+}
+.radiuspanel__close {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px;
+}
+.radiuspanel__close:hover {
+  color: var(--text);
+}

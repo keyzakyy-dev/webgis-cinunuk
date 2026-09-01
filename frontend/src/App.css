@@ -1,3 +1,81 @@
 #root {
   min-height: 100vh;
 }
+
+/* ── Backend Offline Banner ─────────── */
+.backend-offline-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #7f1d1d;
+  color: #fef2f2;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
+  animation: slideUpBanner 0.3s ease;
+}
+@keyframes slideUpBanner {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.backend-offline-content {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.875rem 1.25rem;
+}
+
+.backend-offline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fca5a5;
+  flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+.backend-offline-text {
+  flex: 1;
+  min-width: 0;
+}
+.backend-offline-text strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fee2e2;
+}
+.backend-offline-text p {
+  margin: 0;
+  font-size: 0.78125rem;
+  color: #fca5a5;
+  line-height: 1.5;
+}
+
+.backend-offline-btn {
+  padding: 0.4rem 0.875rem;
+  border-radius: 6px;
+  border: 1px solid #fca5a5;
+  background: transparent;
+  color: #fef2f2;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.backend-offline-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.backend-offline-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

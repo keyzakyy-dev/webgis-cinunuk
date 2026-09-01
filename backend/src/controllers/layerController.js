@@ -1,4 +1,5 @@
 import { query, getOne, insert, execute } from '../config/db.js';
+import { logActivity } from '../utils/logger.js';
 
 function buildGeoJsonFeature(row) {
   const feature = {
@@ -107,6 +108,7 @@ export async function createLayer(req, res) {
       'INSERT INTO layers (nama_layer, tipe, warna, grup, urutan, is_active) VALUES (?, ?, ?, ?, ?, ?)',
       [nama_layer, tipe, warna || '#292524', grup || 'Lainnya', urutan || 0, is_active ?? 1]
     );
+    await logActivity(req.user?.username || 'Admin', 'Tambah Layer', `Membuat layer "${nama_layer}" (${tipe})`);
     res.status(201).json({ success: true, data: { id } });
   } catch (err) {
     console.error('createLayer error:', err);
@@ -128,6 +130,7 @@ export async function updateLayer(req, res) {
       'UPDATE layers SET nama_layer=?, tipe=?, warna=?, grup=?, urutan=?, is_active=? WHERE id=?',
       [nama_layer, tipe, warna, grup, urutan, is_active, id]
     );
+    await logActivity(req.user?.username || 'Admin', 'Edit Layer', `Memperbarui layer ID ${id} ("${nama_layer}")`);
     res.json({ success: result.affectedRows > 0 });
   } catch (err) {
     console.error('updateLayer error:', err);
@@ -138,7 +141,9 @@ export async function updateLayer(req, res) {
 export async function deleteLayer(req, res) {
   try {
     const id = parseInt(req.params.id, 10);
+    const layer = await getOne('SELECT nama_layer FROM layers WHERE id = ?', [id]);
     const result = await execute('DELETE FROM layers WHERE id = ?', [id]);
+    await logActivity(req.user?.username || 'Admin', 'Hapus Layer', `Menghapus layer "${layer?.nama_layer || id}"`);
     res.json({ success: result.affectedRows > 0 });
   } catch (err) {
     console.error('deleteLayer error:', err);

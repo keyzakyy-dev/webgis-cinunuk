@@ -8,6 +8,7 @@ import layerRoutes from './routes/layerRoutes.js';
 import featureRoutes from './routes/featureRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import logRoutes from './routes/logRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/layers', layerRoutes);
 app.use('/api/features', featureRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/logs', logRoutes);
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

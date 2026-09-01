@@ -24,7 +24,6 @@ function parsePetunjukArah(raw) {
   }
 }
 
-// Layer dari backend menjadi definisi layer yang dikonsumsi MapView
 function layersFromApi(apiLayers) {
   return apiLayers.map((l) => ({
     id: buildLayerId(l.nama_layer),
@@ -36,7 +35,7 @@ function layersFromApi(apiLayers) {
       color: l.warna || '#292524',
       weight: 2,
       fillColor: l.warna || '#292524',
-      fillOpacity: 0.1,
+      fillOpacity: 0.15,
       ...(l.tipe === 'point' ? { radius: 8 } : {}),
     },
     legendSymbol: l.tipe === 'point' ? 'marker' : l.tipe === 'line' ? 'line' : 'polygon',
@@ -63,8 +62,6 @@ function kategoriForLayer(layerName, kategori) {
 }
 
 function featureToPoi(feature) {
-  // Hanya fitur dari layer manajemen 'poi' yang jadi marker POI.
-  // Layer point 'import' (mis. Titik Batas & Landmark) dirender sebagai GeoJSON.
   if (feature.layer_manajemen !== 'poi') return null
 
   let geom = null;
@@ -118,12 +115,18 @@ export default function MapPage() {
   const [layerData, setLayerData] = useState({})
   const [pois, setPois] = useState([])
   const [activeLayers, setActiveLayers] = useState([])
+  const [layerOpacities, setLayerOpacities] = useState({})
   const [activeKategori, setActiveKategori] = useState(null)
   const [selectedPoiId, setSelectedPoiId] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
+
+  // Radius Filter State
+  const [radiusFilter, setRadiusFilter] = useState(null) // { center: [lat, lng], radiusMeters: 1000 }
+  const [isPickingRadiusCenter, setIsPickingRadiusCenter] = useState(false)
+
   const mapApiRef = useRef(null)
   const layersRef = useRef(null)
   const navigate = useNavigate()
@@ -147,6 +150,11 @@ export default function MapPage() {
         if (cancelled) return
         setMergedLayers(merged)
         setActiveLayers(merged.filter((l) => l.defaultOn).map((l) => l.id))
+
+        // Inisialisasi opacity default 1 (100%) untuk setiap layer
+        const opacities = {}
+        merged.forEach((l) => { opacities[l.id] = 1 })
+        setLayerOpacities(opacities)
 
         const entries = await Promise.all(
           merged.map(async (l) => {
@@ -208,6 +216,10 @@ export default function MapPage() {
     )
   }
 
+  function handleOpacityChange(id, value) {
+    setLayerOpacities((prev) => ({ ...prev, [id]: parseFloat(value) }))
+  }
+
   function handleSelect(id) {
     setSelectedPoiId(id)
     const poi = pois.find((p) => String(p.id) === String(id))
@@ -221,6 +233,14 @@ export default function MapPage() {
     } else if (item.type === 'desa') {
       mapApiRef.current?.resetView()
     }
+  }
+
+  function handleSetRadiusCenter(centerCoords) {
+    setRadiusFilter((prev) => ({
+      center: centerCoords,
+      radiusMeters: prev?.radiusMeters || 1000,
+    }))
+    setIsPickingRadiusCenter(false)
   }
 
   return (
@@ -272,14 +292,18 @@ export default function MapPage() {
       <div className="mappage__map">
         {!loaded && !error && <Loading text="Memuat data wilayah…" />}
         {error && <div className="mappage__error">{error}</div>}
+        
         <MapView
           ref={mapApiRef}
           poiList={visiblePois}
           layerData={layerData}
           activeLayers={activeLayers}
           layerDefs={mergedLayers}
+          layerOpacities={layerOpacities}
           kategoriAktif={activeKategori}
           onSelectPoi={setSelectedPoiId}
+          radiusFilter={radiusFilter}
+          onSetRadiusCenter={isPickingRadiusCenter ? handleSetRadiusCenter : null}
         />
 
         <div className="mappage__search">
@@ -290,6 +314,46 @@ export default function MapPage() {
           />
         </div>
 
+        {/* RADIUS FILTER FLOATING CONTROL */}
+        <div className="radiuspanel">
+          {radiusFilter ? (
+            <div className="radiuspanel__box">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Filter Radius: {radiusFilter.radiusMeters}m</span>
+                <button
+                  type="button"
+                  className="radiuspanel__close"
+                  onClick={() => setRadiusFilter(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <input
+                type="range"
+                min="200"
+                max="3000"
+                step="100"
+                value={radiusFilter.radiusMeters}
+                onChange={(e) => setRadiusFilter((r) => ({ ...r, radiusMeters: Number(e.target.value) }))}
+                style={{ width: '100%', margin: '0.35rem 0' }}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={'radiuspanel__btn' + (isPickingRadiusCenter ? ' radiuspanel__btn--active' : '')}
+              onClick={() => setIsPickingRadiusCenter((v) => !v)}
+              title="Filter Lokasi Berdasarkan Radius"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" />
+              </svg>
+              {isPickingRadiusCenter ? 'Klik titik di peta…' : 'Filter Radius'}
+            </button>
+          )}
+        </div>
+
+        {/* LAYER PANEL & OPACITY CONTROL */}
         <div className="layerpanel" ref={layersRef}>
           <button
             type="button"
@@ -317,27 +381,45 @@ export default function MapPage() {
                   <span className="layerpanel__group-title">{group}</span>
                   {layers.map((l) => {
                     const on = activeLayers.includes(l.id)
+                    const opacity = layerOpacities[l.id] !== undefined ? layerOpacities[l.id] : 1
                     return (
-                      <button
-                        key={l.id}
-                        type="button"
-                        className={'layerpanel__row' + (on ? ' layerpanel__row--on' : '')}
-                        onClick={() => toggleLayer(l.id)}
-                        aria-pressed={on}
-                      >
-                        <span
-                          className="layerpanel__swatch"
-                          style={l.style.dashArray
-                            ? { borderBottom: '2px dashed ' + l.legendColor }
-                            : { background: l.legendColor }}
-                        />
-                        <span className="layerpanel__label">{l.label}</span>
-                        <span className="layerpanel__check" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                            <path d="M5 12.5 10 17 19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </span>
-                      </button>
+                      <div key={l.id} className="layerpanel__item-wrap">
+                        <button
+                          type="button"
+                          className={'layerpanel__row' + (on ? ' layerpanel__row--on' : '')}
+                          onClick={() => toggleLayer(l.id)}
+                          aria-pressed={on}
+                        >
+                          <span
+                            className="layerpanel__swatch"
+                            style={l.style.dashArray
+                              ? { borderBottom: '2px dashed ' + l.legendColor }
+                              : { background: l.legendColor }}
+                          />
+                          <span className="layerpanel__label">{l.label}</span>
+                          <span className="layerpanel__check" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                              <path d="M5 12.5 10 17 19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </span>
+                        </button>
+
+                        {/* Slider Opacity untuk layer GeoJSON yang aktif */}
+                        {on && l.manajemen !== 'poi' && (
+                          <div className="layerpanel__opacity-row">
+                            <span style={{ fontSize: '0.68rem', color: 'var(--admin-muted)' }}>Transparansi: {Math.round(opacity * 100)}%</span>
+                            <input
+                              type="range"
+                              min="0.1"
+                              max="1"
+                              step="0.05"
+                              value={opacity}
+                              onChange={(e) => handleOpacityChange(l.id, e.target.value)}
+                              style={{ height: '4px', width: '100%' }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>

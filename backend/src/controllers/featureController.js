@@ -1,4 +1,5 @@
 import { query, getOne, insert, execute } from '../config/db.js';
+import { logActivity } from '../utils/logger.js';
 
 export async function listFeatures(req, res) {
   try {
@@ -53,58 +54,115 @@ export async function createFeature(req, res) {
   try {
     const d = req.body;
     if (!d.layer_id) {
-      return res.status(422).json({ success: false, errors: { layer_id: 'layer_id wajib diisi' } });
+      return res.status(422).json({ success: false, message: 'Layer tujuan wajib dipilih' });
     }
-    if (!d.nama) {
-      return res.status(422).json({ success: false, errors: { nama: 'Nama wajib diisi' } });
+    if (!d.nama || !String(d.nama).trim()) {
+      return res.status(422).json({ success: false, message: 'Nama fitur/lokasi wajib diisi' });
     }
 
-    const petunjuk = d.petunjuk_arah ? JSON.stringify(d.petunjuk_arah) : null;
-    const geometry = d.geometry && typeof d.geometry === 'object' ? JSON.stringify(d.geometry) : d.geometry || null;
+    const layerId = parseInt(d.layer_id, 10);
+    if (isNaN(layerId) || layerId <= 0) {
+      return res.status(422).json({ success: false, message: 'Layer tidak valid' });
+    }
+
+    const layer = await getOne('SELECT id FROM layers WHERE id = ?', [layerId]);
+    if (!layer) {
+      return res.status(422).json({ success: false, message: 'Layer yang dipilih tidak ditemukan di database' });
+    }
+
+    const lat = d.lat != null && d.lat !== '' && !isNaN(parseFloat(d.lat)) ? parseFloat(d.lat) : null;
+    const lng = d.lng != null && d.lng !== '' && !isNaN(parseFloat(d.lng)) ? parseFloat(d.lng) : null;
+
+    let geometry = null;
+    if (d.geometry && typeof d.geometry === 'object') {
+      geometry = JSON.stringify(d.geometry);
+    } else if (typeof d.geometry === 'string' && d.geometry.trim()) {
+      geometry = d.geometry.trim();
+    } else if (lat !== null && lng !== null) {
+      geometry = JSON.stringify({ type: 'Point', coordinates: [lng, lat] });
+    }
+
+    let petunjuk = null;
+    if (Array.isArray(d.petunjuk_arah)) {
+      petunjuk = JSON.stringify(d.petunjuk_arah.filter((p) => p && String(p).trim()));
+    } else if (d.petunjuk_arah) {
+      petunjuk = typeof d.petunjuk_arah === 'string' ? d.petunjuk_arah : JSON.stringify(d.petunjuk_arah);
+    }
 
     const id = await insert(
       `INSERT INTO features
         (layer_id, kategori, nama, deskripsi, deskripsi_lengkap, alamat, jam_layanan, petunjuk_arah,
          lat, lng, geometry, foto_1, foto_2, foto_3, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        d.layer_id,
-        d.kategori || null,
-        d.nama,
-        d.deskripsi || null,
-        d.deskripsi_lengkap || null,
-        d.alamat || null,
-        d.jam_layanan || null,
+        layerId,
+        d.kategori ? String(d.kategori).trim() : null,
+        String(d.nama).trim(),
+        d.deskripsi ? String(d.deskripsi).trim() : null,
+        d.deskripsi_lengkap ? String(d.deskripsi_lengkap).trim() : null,
+        d.alamat ? String(d.alamat).trim() : null,
+        d.jam_layanan ? String(d.jam_layanan).trim() : null,
         petunjuk,
-        d.lat || null,
-        d.lng || null,
+        lat,
+        lng,
         geometry,
         d.foto_1 || null,
         d.foto_2 || null,
         d.foto_3 || null,
-        d.is_active ?? 1,
+        d.is_active != null ? (d.is_active ? 1 : 0) : 1,
       ]
     );
+    await logActivity(req.user?.username || 'Admin', 'Tambah Fitur', `Membuat fitur "${String(d.nama).trim()}" di layer ${layerId}`);
     res.status(201).json({ success: true, data: { id } });
   } catch (err) {
     console.error('createFeature error:', err);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server: ' + (err.message || '') });
   }
 }
 
 export async function updateFeature(req, res) {
   try {
     const id = parseInt(req.params.id, 10);
-    const d = req.body;
-    if (!d.layer_id) {
-      return res.status(422).json({ success: false, errors: { layer_id: 'layer_id wajib diisi' } });
-    }
-    if (!d.nama) {
-      return res.status(422).json({ success: false, errors: { nama: 'Nama wajib diisi' } });
+    if (isNaN(id) || id <= 0) {
+      return res.status(422).json({ success: false, message: 'ID fitur tidak valid' });
     }
 
-    const petunjuk = d.petunjuk_arah ? JSON.stringify(d.petunjuk_arah) : null;
-    const geometry = d.geometry && typeof d.geometry === 'object' ? JSON.stringify(d.geometry) : d.geometry || null;
+    const d = req.body;
+    if (!d.layer_id) {
+      return res.status(422).json({ success: false, message: 'Layer tujuan wajib dipilih' });
+    }
+    if (!d.nama || !String(d.nama).trim()) {
+      return res.status(422).json({ success: false, message: 'Nama fitur/lokasi wajib diisi' });
+    }
+
+    const layerId = parseInt(d.layer_id, 10);
+    if (isNaN(layerId) || layerId <= 0) {
+      return res.status(422).json({ success: false, message: 'Layer tidak valid' });
+    }
+
+    const layer = await getOne('SELECT id FROM layers WHERE id = ?', [layerId]);
+    if (!layer) {
+      return res.status(422).json({ success: false, message: 'Layer yang dipilih tidak ditemukan di database' });
+    }
+
+    const lat = d.lat != null && d.lat !== '' && !isNaN(parseFloat(d.lat)) ? parseFloat(d.lat) : null;
+    const lng = d.lng != null && d.lng !== '' && !isNaN(parseFloat(d.lng)) ? parseFloat(d.lng) : null;
+
+    let geometry = null;
+    if (d.geometry && typeof d.geometry === 'object') {
+      geometry = JSON.stringify(d.geometry);
+    } else if (typeof d.geometry === 'string' && d.geometry.trim()) {
+      geometry = d.geometry.trim();
+    } else if (lat !== null && lng !== null) {
+      geometry = JSON.stringify({ type: 'Point', coordinates: [lng, lat] });
+    }
+
+    let petunjuk = null;
+    if (Array.isArray(d.petunjuk_arah)) {
+      petunjuk = JSON.stringify(d.petunjuk_arah.filter((p) => p && String(p).trim()));
+    } else if (d.petunjuk_arah) {
+      petunjuk = typeof d.petunjuk_arah === 'string' ? d.petunjuk_arah : JSON.stringify(d.petunjuk_arah);
+    }
 
     const result = await execute(
       `UPDATE features SET
@@ -113,35 +171,38 @@ export async function updateFeature(req, res) {
         updated_at=NOW()
        WHERE id=?`,
       [
-        d.layer_id,
-        d.kategori || null,
-        d.nama,
-        d.deskripsi || null,
-        d.deskripsi_lengkap || null,
-        d.alamat || null,
-        d.jam_layanan || null,
+        layerId,
+        d.kategori ? String(d.kategori).trim() : null,
+        String(d.nama).trim(),
+        d.deskripsi ? String(d.deskripsi).trim() : null,
+        d.deskripsi_lengkap ? String(d.deskripsi_lengkap).trim() : null,
+        d.alamat ? String(d.alamat).trim() : null,
+        d.jam_layanan ? String(d.jam_layanan).trim() : null,
         petunjuk,
-        d.lat || null,
-        d.lng || null,
+        lat,
+        lng,
         geometry,
         d.foto_1 || null,
         d.foto_2 || null,
         d.foto_3 || null,
-        d.is_active ?? 1,
+        d.is_active != null ? (d.is_active ? 1 : 0) : 1,
         id,
       ]
     );
+    await logActivity(req.user?.username || 'Admin', 'Edit Fitur', `Memperbarui fitur "${String(d.nama).trim()}" (ID ${id})`);
     res.json({ success: result.affectedRows > 0 });
   } catch (err) {
     console.error('updateFeature error:', err);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server: ' + (err.message || '') });
   }
 }
 
 export async function deleteFeature(req, res) {
   try {
     const id = parseInt(req.params.id, 10);
+    const feat = await getOne('SELECT nama FROM features WHERE id = ?', [id]);
     const result = await execute('DELETE FROM features WHERE id = ?', [id]);
+    await logActivity(req.user?.username || 'Admin', 'Hapus Fitur', `Menghapus fitur "${feat?.nama || id}"`);
     res.json({ success: result.affectedRows > 0 });
   } catch (err) {
     console.error('deleteFeature error:', err);
@@ -244,6 +305,7 @@ export async function importFeatures(req, res) {
       );
       count++;
     }
+    await logActivity(req.user?.username || 'Admin', 'Import GeoJSON', `Mengimpor ${count} fitur ke layer "${layer.nama_layer}"`);
     res.json({ success: true, data: { imported: count, layer: { id: layer.id, nama_layer: layer.nama_layer, created: !req.body.layer_id } } });
   } catch (err) {
     console.error('importFeatures error:', err);
