@@ -31,6 +31,7 @@ function layersFromApi(apiLayers) {
     label: l.nama_layer,
     type: l.tipe,
     group: l.grup || 'Lainnya',
+    manajemen: l.manajemen || 'import',
     style: {
       color: l.warna || '#292524',
       weight: 2,
@@ -45,18 +46,26 @@ function layersFromApi(apiLayers) {
   }))
 }
 
-function kategoriForLayer(layerName) {
-  const n = (layerName || '').toLowerCase()
-  if (n.includes('sekolah')) return { key: 'pendidikan', label: 'Fasilitas Pendidikan', warna: '#16a34a' }
-  if (n.includes('ibadah') || n.includes('masjid') || n.includes('gereja') || n.includes('mushola')) return { key: 'ibadah', label: 'Tempat Ibadah', warna: '#8b5cf6' }
-  if (n.includes('puskesmas') || n.includes('kesehatan') || n.includes('posyandu')) return { key: 'kesehatan', label: 'Fasilitas Kesehatan', warna: '#f59e0b' }
-  if (n.includes('kantor') || n.includes('pemerintahan') || n.includes('pemdes')) return { key: 'pemerintahan', label: 'Kantor Pemerintahan', warna: '#dc2626' }
+function kategoriForLayer(layerName, kategori) {
+  if (kategori) {
+    const k = kategori.toLowerCase()
+    if (k.includes('sekolah') || k.includes('pendidikan') || k.includes('sd ') || k.includes('smp') || k.includes('sma') || k.includes('madrasah'))
+      return { key: 'pendidikan', label: kategori, warna: '#16a34a' }
+    if (k.includes('ibadah') || k.includes('masjid') || k.includes('mushola') || k.includes('gereja'))
+      return { key: 'ibadah', label: kategori, warna: '#8b5cf6' }
+    if (k.includes('kesehatan') || k.includes('puskesmas') || k.includes('klinik') || k.includes('posyandu'))
+      return { key: 'kesehatan', label: kategori, warna: '#f59e0b' }
+    if (k.includes('kantor') || k.includes('pemerintahan') || k.includes('pemdes'))
+      return { key: 'pemerintahan', label: kategori, warna: '#dc2626' }
+    return { key: 'umum', label: kategori, warna: '#0891b2' }
+  }
   return { key: 'umum', label: 'Fasilitas Umum', warna: '#0891b2' }
 }
 
 function featureToPoi(feature) {
-  // Hanya fitur dari layer point yang jadi POI marker
-  if (feature.layer_type !== 'point') return null
+  // Hanya fitur dari layer manajemen 'poi' yang jadi marker POI.
+  // Layer point 'import' (mis. Titik Batas & Landmark) dirender sebagai GeoJSON.
+  if (feature.layer_manajemen !== 'poi') return null
 
   let geom = null;
   if (feature.geometry) {
@@ -82,7 +91,7 @@ function featureToPoi(feature) {
 
   if (isNaN(lat) || isNaN(lng)) return null
 
-  const kat = kategoriForLayer(feature.layer_name)
+  const kat = kategoriForLayer(feature.layer_name, feature.kategori)
   const foto = [feature.foto_1, feature.foto_2, feature.foto_3].filter(Boolean)
   const deskripsi = feature.deskripsi || `${feature.nama} merupakan ${(feature.layer_name || 'lokasi').toLowerCase()} di Desa ${SITE_NAMA_DESA}.`
   const alamat = feature.alamat || `Desa ${SITE_NAMA_DESA}, Kec. ${SITE_KECAMATAN}, Kab. ${SITE_KABUPATEN}`

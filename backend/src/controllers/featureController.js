@@ -18,7 +18,7 @@ export async function listFeatures(req, res) {
       conditions.push('f.is_active = 1');
     }
 
-    let sql = 'SELECT f.*, l.nama_layer AS layer_name, l.tipe AS layer_type FROM features f JOIN layers l ON f.layer_id = l.id';
+    let sql = 'SELECT f.*, l.nama_layer AS layer_name, l.tipe AS layer_type, l.manajemen AS layer_manajemen FROM features f JOIN layers l ON f.layer_id = l.id';
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
@@ -36,7 +36,7 @@ export async function getFeature(req, res) {
   try {
     const id = parseInt(req.params.id, 10);
     const row = await getOne(
-      'SELECT f.*, l.nama_layer AS layer_name, l.tipe AS layer_type, l.warna AS layer_warna FROM features f JOIN layers l ON f.layer_id = l.id WHERE f.id = ?',
+      'SELECT f.*, l.nama_layer AS layer_name, l.tipe AS layer_type, l.warna AS layer_warna, l.manajemen AS layer_manajemen FROM features f JOIN layers l ON f.layer_id = l.id WHERE f.id = ?',
       [id]
     );
     if (!row) {
@@ -64,11 +64,12 @@ export async function createFeature(req, res) {
 
     const id = await insert(
       `INSERT INTO features
-        (layer_id, nama, deskripsi, deskripsi_lengkap, alamat, jam_layanan, petunjuk_arah,
+        (layer_id, kategori, nama, deskripsi, deskripsi_lengkap, alamat, jam_layanan, petunjuk_arah,
          lat, lng, geometry, foto_1, foto_2, foto_3, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         d.layer_id,
+        d.kategori || null,
         d.nama,
         d.deskripsi || null,
         d.deskripsi_lengkap || null,
@@ -107,12 +108,13 @@ export async function updateFeature(req, res) {
 
     const result = await execute(
       `UPDATE features SET
-        layer_id=?, nama=?, deskripsi=?, deskripsi_lengkap=?, alamat=?, jam_layanan=?,
+        layer_id=?, kategori=?, nama=?, deskripsi=?, deskripsi_lengkap=?, alamat=?, jam_layanan=?,
         petunjuk_arah=?, lat=?, lng=?, geometry=?, foto_1=?, foto_2=?, foto_3=?, is_active=?,
         updated_at=NOW()
        WHERE id=?`,
       [
         d.layer_id,
+        d.kategori || null,
         d.nama,
         d.deskripsi || null,
         d.deskripsi_lengkap || null,

@@ -10,7 +10,8 @@ import './MapView.css'
 function styleGeoJson(layerDef) {
   return () => {
     const s = { ...layerDef.style }
-    delete s.radius
+    // Radius hanya untuk point layer import (poi layers tidak pakai GeoJSON)
+    if (layerDef.type !== 'point') delete s.radius
     return s
   }
 }
@@ -161,7 +162,8 @@ export default function MapView({
 
         {activeLayers.map((id) => {
           const layerDef = layerById[id]
-          if (!layerDef || layerDef.type === 'point') return null
+          // Layer 'poi' dirender sebagai marker POI (poiList), bukan GeoJSON
+          if (!layerDef || layerDef.manajemen === 'poi') return null
           return (
             <LayerGeoJson key={layerDef.id} layerDef={layerDef} data={layerData[layerDef.id]} />
           )

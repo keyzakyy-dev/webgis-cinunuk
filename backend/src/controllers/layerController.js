@@ -13,6 +13,9 @@ function buildGeoJsonFeature(row) {
   if (row.deskripsi) {
     feature.properties.description = row.deskripsi;
   }
+  if (row.kategori) {
+    feature.properties.kategori = row.kategori;
+  }
   if (row.deskripsi_lengkap) {
     feature.properties.deskripsi_lengkap = row.deskripsi_lengkap;
   }

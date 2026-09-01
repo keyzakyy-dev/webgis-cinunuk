@@ -2,8 +2,20 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 
+const KATEGORI_OPTIONS = [
+  { value: '', label: '— Pilih kategori —' },
+  { value: 'Fasilitas Sekolah', label: 'Fasilitas Sekolah' },
+  { value: 'Fasilitas Pendidikan', label: 'Fasilitas Pendidikan' },
+  { value: 'Tempat Ibadah', label: 'Tempat Ibadah' },
+  { value: 'Fasilitas Kesehatan', label: 'Fasilitas Kesehatan' },
+  { value: 'Kantor Pemerintahan', label: 'Kantor Pemerintahan' },
+  { value: 'Fasilitas Umum', label: 'Fasilitas Umum' },
+  { value: 'Lainnya', label: 'Lainnya' },
+];
+
 const EMPTY = {
   layer_id: '',
+  kategori: '',
   nama: '',
   deskripsi: '',
   deskripsi_lengkap: '',
@@ -30,7 +42,9 @@ export default function AdminFeatureEdit() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/api/layers?all=1').then((r) => setLayers(r.data || [])).catch(() => {});
+    api.get('/api/layers?all=1')
+      .then((r) => setLayers((r.data || []).filter((l) => l.tipe === 'point' || l.manajemen === 'poi')))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -41,6 +55,7 @@ export default function AdminFeatureEdit() {
         const f = res.data;
         setForm({
           layer_id: f.layer_id,
+          kategori: f.kategori || '',
           nama: f.nama,
           deskripsi: f.deskripsi || '',
           deskripsi_lengkap: f.deskripsi_lengkap || '',
@@ -140,7 +155,15 @@ export default function AdminFeatureEdit() {
               <select className="admin__select" value={form.layer_id} onChange={(e) => update('layer_id', e.target.value)} required>
                 <option value="">Pilih Layer</option>
                 {layers.map((l) => (
-                  <option key={l.id} value={l.id}>{l.nama_layer}</option>
+                  <option key={l.id} value={l.id}>{l.nama_layer} ({l.tipe})</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin__field">
+              <label>Kategori *</label>
+              <select className="admin__select" value={form.kategori} onChange={(e) => update('kategori', e.target.value)} required>
+                {KATEGORI_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
             </div>
