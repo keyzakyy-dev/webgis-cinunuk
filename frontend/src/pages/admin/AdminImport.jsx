@@ -1,26 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
 import './admin.css';
 
 export default function AdminImport() {
-  const [layers, setLayers] = useState([]);
-  const [layerId, setLayerId] = useState('');
+  const [layerName, setLayerName] = useState('');
   const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
-  useEffect(() => {
-    api.get('/api/layers?all=1')
-      .then((r) => setLayers(r.data || []))
-      .catch(() => {});
-  }, []);
-
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!file || !layerId) {
-      setError('Pilih layer dan file GeoJSON');
+    if (!file || !layerName.trim()) {
+      setError('Isi nama layer tujuan dan pilih file GeoJSON');
       return;
     }
     setBusy(true);
@@ -28,10 +21,10 @@ export default function AdminImport() {
     setResult(null);
     try {
       const fd = new FormData();
-      fd.append('layer_id', layerId);
+      fd.append('layer_nama', layerName.trim());
       fd.append('geojson', file);
       const res = await api.upload('/api/features/import', fd);
-      setResult(res.data.imported);
+      setResult(res.data);
     } catch (err) {
       setError(err.message || 'Import gagal');
     } finally {
@@ -39,25 +32,43 @@ export default function AdminImport() {
     }
   }
 
+  function reset() {
+    setLayerName('');
+    setFile(null);
+    setResult(null);
+    setError('');
+  }
+
   return (
     <>
       <Link to="/admin" className="admin__back">← Dashboard</Link>
       <h2>Import GeoJSON</h2>
       {error && <div className="admin__msg admin__msg--err">{error}</div>}
-      {result !== null && (
-        <div className="admin__msg admin__msg--ok">Berhasil import {result} fitur ke database.</div>
+      {result && (
+        <div className="admin__msg admin__msg--ok">
+          {result.layer?.created ? (
+            <>Layer baru <strong>{result.layer.nama_layer}</strong> dibuat &mdash; {result.imported} fitur diimport.</>
+          ) : (
+            <>{result.imported} fitur diimport ke layer <strong>{result.layer?.nama_layer}</strong>.</>
+          )}
+        </div>
       )}
 
       <form onSubmit={handleSubmit}>
         <div className="admin__card">
           <div className="admin__field">
             <label>Layer Tujuan *</label>
-            <select className="admin__select" value={layerId} onChange={(e) => setLayerId(e.target.value)} required>
-              <option value="">Pilih Layer</option>
-              {layers.map((l) => (
-                <option key={l.id} value={l.id}>{l.nama_layer} ({l.tipe})</option>
-              ))}
-            </select>
+            <input
+              className="admin__input"
+              type="text"
+              value={layerName}
+              onChange={(e) => setLayerName(e.target.value)}
+              required
+              placeholder="Tulis nama layer, mis. Pemukiman, Pendidikan, Jalan Baru…"
+            />
+            <span style={{ fontSize: '0.8rem', color: 'var(--admin-muted)', marginTop: '0.3rem', display: 'block' }}>
+              Jika layer belum ada, akan dibuat otomatis.
+            </span>
           </div>
 
           <div className="admin__field">
@@ -81,7 +92,7 @@ export default function AdminImport() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-          <button type="button" onClick={() => { setFile(null); setLayerId(''); setResult(null); setError(''); }} className="admin__btn admin__btn--ghost" style={{ marginRight: 'auto' }}>Reset</button>
+          <button type="button" onClick={reset} className="admin__btn admin__btn--ghost" style={{ marginRight: 'auto' }}>Reset</button>
           <button className="admin__btn admin__btn--primary" disabled={busy}>
             {busy ? 'Importing…' : 'Import Sekarang'}
           </button>

@@ -147,14 +147,24 @@ export async function deleteFeature(req, res) {
   }
 }
 
+function detectGeometryType(features) {
+  const counts = { polygon: 0, line: 0, point: 0 };
+  for (const f of features || []) {
+    const t = f?.geometry?.type;
+    if (t === 'Polygon' || t === 'MultiPolygon') counts.polygon++;
+    else if (t === 'LineString' || t === 'MultiLineString') counts.line++;
+    else if (t === 'Point' || t === 'MultiPoint') counts.point++;
+  }
+  if (counts.polygon >= counts.line && counts.polygon >= counts.point && counts.polygon > 0) return 'polygon';
+  if (counts.line > 0 && counts.line >= counts.point) return 'line';
+  if (counts.point > 0) return 'point';
+  return null;
+}
+
 export async function importFeatures(req, res) {
   try {
     if (!req.file) {
       return res.status(422).json({ success: false, message: 'File GeoJSON wajib diisi' });
-    }
-    const layerId = parseInt(req.body.layer_id, 10);
-    if (!layerId) {
-      return res.status(422).json({ success: false, message: 'layer_id wajib diisi' });
     }
 
     const content = req.file.buffer.toString('utf-8');
@@ -166,6 +176,31 @@ export async function importFeatures(req, res) {
     }
     if (!geojson.features) {
       return res.status(422).json({ success: false, message: 'Format GeoJSON tidak valid (FeatureCollection diperlukan)' });
+    }
+
+    // Tentukan layer tujuan: by id ATAU by nama (find-or-create)
+    let layer = null;
+    if (req.body.layer_id) {
+      layer = await getOne('SELECT * FROM layers WHERE id = ?', [parseInt(req.body.layer_id, 10)]);
+    } else if (req.body.layer_nama) {
+      const nama = String(req.body.layer_nama).trim();
+      if (!nama) {
+        return res.status(422).json({ success: false, message: 'Nama layer tujuan wajib diisi' });
+      }
+      layer = await getOne('SELECT * FROM layers WHERE LOWER(nama_layer) = ?', [nama.toLowerCase()]);
+      if (!layer) {
+        const tipe = detectGeometryType(geojson.features) || 'polygon';
+        const [nextRow] = await query(
+          'SELECT COALESCE(MAX(urutan), 0) + 1 AS next FROM layers'
+        );
+        const id = await insert(
+          "INSERT INTO layers (nama_layer, tipe, warna, grup, urutan, is_active, manajemen) VALUES (?, ?, ?, ?, ?, 0, 'import')",
+          [nama, tipe, '#292524', 'Lainnya', nextRow?.next || 1]
+        );
+        layer = await getOne('SELECT * FROM layers WHERE id = ?', [id]);
+      }
+    } else {
+      return res.status(422).json({ success: false, message: 'Nama layer tujuan wajib diisi' });
     }
 
     let count = 0;
@@ -197,7 +232,7 @@ export async function importFeatures(req, res) {
         `INSERT INTO features (layer_id, nama, deskripsi, lat, lng, geometry, is_active)
          VALUES (?, ?, ?, ?, ?, ?, 1)`,
         [
-          layerId,
+          layer.id,
           props.Name || props.name || 'Tanpa Nama',
           props.description || null,
           lat,
@@ -207,7 +242,7 @@ export async function importFeatures(req, res) {
       );
       count++;
     }
-    res.json({ success: true, data: { imported: count } });
+    res.json({ success: true, data: { imported: count, layer: { id: layer.id, nama_layer: layer.nama_layer, created: !req.body.layer_id } } });
   } catch (err) {
     console.error('importFeatures error:', err);
     res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
