@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `layers` (
   `grup`       VARCHAR(50)  NOT NULL DEFAULT 'Lainnya',
   `urutan`     INT NOT NULL DEFAULT 0,
   `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
+  `manajemen`  VARCHAR(20)  NOT NULL DEFAULT 'import',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
