@@ -62,7 +62,7 @@ function kategoriForLayer(layerName, kategori) {
 }
 
 function featureToPoi(feature) {
-  if (feature.layer_manajemen !== 'poi') return null
+  if (feature.layer_manajemen !== 'poi' && feature.layer_type !== 'point') return null
 
   let geom = null;
   if (feature.geometry) {
