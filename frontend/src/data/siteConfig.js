@@ -1,5 +1,5 @@
-export const API_URL =
-  import.meta.env.VITE_API_URL ?? ''
+const rawApiUrl = import.meta.env.VITE_API_URL ?? ''
+export const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl
 
 export const SITE = {
   nama: 'Peta Wilayah Desa Cinunuk',

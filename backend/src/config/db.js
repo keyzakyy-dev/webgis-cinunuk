@@ -1,8 +1,10 @@
 import mysql from 'mysql2/promise';
 
+const isCloud = process.env.DB_SSL === 'true' || (process.env.DB_HOST && process.env.DB_HOST.includes('aivencloud'));
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
+  port: parseInt(process.env.DB_PORT, 10) || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASS || '',
   database: process.env.DB_NAME || 'sig_cinunuk',
@@ -11,6 +13,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
+  ...(isCloud ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
 export async function query(sql, params) {

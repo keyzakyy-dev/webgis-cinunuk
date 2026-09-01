@@ -19,7 +19,19 @@ const allowedOrigins = process.env.CORS_ORIGIN
   : ['http://localhost:5173', 'http://localhost:4173'];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Izinkan request tanpa origin (seperti mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    // Jika CORS_ORIGIN diset '*' atau domain ada di allowedOrigins atau subdomain vercel.app
+    if (
+      allowedOrigins.includes('*') ||
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // fallback permissive untuk production public API
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));

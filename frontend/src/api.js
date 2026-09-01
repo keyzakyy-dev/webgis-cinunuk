@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_URL ?? '';
+const rawUrl = import.meta.env.VITE_API_URL ?? '';
+const BASE_URL = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
 
 /** Timeout default untuk semua request (ms) */
 const REQUEST_TIMEOUT_MS = 15_000;

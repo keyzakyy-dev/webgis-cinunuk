@@ -15,20 +15,37 @@ const {
   DB_NAME = 'sig_cinunuk',
 } = process.env;
 
-const conn = await mysql.createConnection({
+const isCloud = process.env.DB_SSL === 'true' || DB_HOST.includes('aivencloud');
+
+const connConfig = {
   host: DB_HOST,
-  port: DB_PORT,
+  port: parseInt(DB_PORT, 10),
   user: DB_USER,
   password: DB_PASS,
   multipleStatements: true,
-});
+  ...(isCloud ? { ssl: { rejectUnauthorized: false } } : {}),
+};
+
+// Sertakan database langsung jika Aiven atau database sudah ditentukan
+if (isCloud || DB_NAME === 'defaultdb') {
+  connConfig.database = DB_NAME;
+}
+
+const conn = await mysql.createConnection(connConfig);
 
 console.log('─ Instalasi SIG Cinunuk (Node.js + Express + MySQL) ─');
+console.log(`   Host: ${DB_HOST}:${DB_PORT} (${isCloud ? 'Cloud SSL' : 'Lokal'})`);
+console.log(`   Database Target: ${DB_NAME}`);
 
 async function step1CreateTables() {
   console.log('\n[1/3] Membuat database & tabel...');
-  await conn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-  await conn.query(`USE \`${DB_NAME}\``);
+  
+  if (!isCloud && DB_NAME !== 'defaultdb') {
+    await conn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    await conn.query(`USE \`${DB_NAME}\``);
+  } else {
+    await conn.query(`USE \`${DB_NAME}\``);
+  }
 
   await conn.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -210,8 +227,10 @@ async function seedFeatures() {
               sumLng += parseFloat(c[0]);
               sumLat += parseFloat(c[1]);
             }
-            lng = sumLng / total;
-            lat = sumLat / total;
+            const rawLng = sumLng / total;
+            const rawLat = sumLat / total;
+            lng = isNaN(rawLng) ? null : rawLng;
+            lat = isNaN(rawLat) ? null : rawLat;
           }
         }
       }
@@ -222,8 +241,8 @@ async function seedFeatures() {
           layerId,
           props.Name || props.name || 'Tanpa Nama',
           props.description || null,
-          lat,
-          lng,
+          lat ?? null,
+          lng ?? null,
           geom ? JSON.stringify(geom) : null,
         ]
       );
@@ -246,7 +265,6 @@ try {
   }
 
   console.log('\n✔ Instalasi selesai.');
-  console.log('   Jalankan: npm install && npm start');
 } catch (err) {
   console.error('\n✘ Instalasi gagal:', err.message);
   process.exit(1);
