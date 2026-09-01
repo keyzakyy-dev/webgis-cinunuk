@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import MapView from '../components/MapView'
 import PoiList from '../components/PoiList'
 import SearchBox from '../components/SearchBox'

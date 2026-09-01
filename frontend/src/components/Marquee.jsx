@@ -31,7 +31,7 @@ export default function Marquee() {
 
   if (items.length === 0) return null
 
-  const loop = [...items, ...items]
+  const loop = items.length >= 5 ? [...items, ...items] : items
 
   return (
     <div className="marquee" aria-label="Daftar lokasi Desa Cinunuk">
