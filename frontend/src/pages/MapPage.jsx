@@ -100,6 +100,7 @@ function featureToPoi(feature) {
     kategoriColor: kat.warna,
     kategoriLabel: kat.label,
     layerId: feature.layer_id,
+    layerSlug: buildLayerId(feature.layer_name || ''),
     koordinat: [lat, lng],
     deskripsi,
     deskripsiLengkap: feature.deskripsi_lengkap || deskripsi,
@@ -206,9 +207,16 @@ export default function MapPage() {
 
   const selectedPoi = pois.find((p) => String(p.id) === String(selectedPoiId)) || null
 
-  const visiblePois = activeKategori === null
-    ? pois
-    : pois.filter((p) => p.kategori === activeKategori)
+  const visiblePois = useMemo(() => {
+    return pois.filter((p) => {
+      // 1. Layer tempat POI berada harus aktif di checklist layer
+      const isLayerActive = activeLayers.includes(p.layerSlug) || activeLayers.includes(String(p.layerId))
+      if (!isLayerActive) return false
+      // 2. Kategori filter (jika dipilih)
+      if (activeKategori !== null && p.kategori !== activeKategori) return false
+      return true
+    })
+  }, [pois, activeLayers, activeKategori])
 
   function toggleLayer(id) {
     setActiveLayers((prev) =>

@@ -114,10 +114,10 @@ function Foto({ src, label, warna }) {
         <div className="foto__placeholder">
           <svg viewBox="0 0 24 24" width="34" height="34" fill="none" aria-hidden="true">
             <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6" />
-            <path d="M8.5 10c0 2.2-1.8 4-4 4s-4-1.8-4-4 1.8-4 4-4 4 1.8 4 4Z" stroke="currentColor" strokeWidth="1.6" />
-            <path d="m1 16 8 7 12-13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="8.5" cy="9.5" r="1.5" fill="currentColor" />
+            <polyline points="21 15 16 10 5 21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <small>Foto akan ditambahkan</small>
+          <small>Foto belum tersedia</small>
         </div>
       )}
     </div>
