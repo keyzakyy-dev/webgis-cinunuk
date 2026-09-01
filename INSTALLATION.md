@@ -1,193 +1,207 @@
-# Panduan Instalasi SIG Desa Cinunuk
+# Instalasi SIG Desa Cinunuk (Node.js + Express + MySQL)
 
-## Daftar Isi
-1. [Prasyarat](#1-prasyarat)
-2. [Struktur Proyek](#2-struktur-proyek)
-3. [Instalasi Backend (PHP + MySQL)](#3-instalasi-backend-php--mysql)
-4. [Instalasi Frontend (React)](#4-instalasi-frontend-react)
-5. [Menjalankan Aplikasi](#5-menjalankan-aplikasi)
-6. [Troubleshooting](#6-troubleshooting)
+Panduan cepat untuk menjalankan **backend API** dan **frontend React** secara lokal atau production.
 
 ---
 
-## 1. Prasyarat
+## 1. Persyaratan
 
-| Komponen | Versi Minimal | Keterangan |
-|----------|--------------|------------|
-| PHP | 7.4+ | Disarankan 8.1+ |
-| MySQL/MariaDB | 5.6+ | Disarankan 8.0+ |
-| Node.js | 18.x+ | Untuk frontend |
-| npm | 9.x+ | |
-| Composer | 2.x | (opsional) |
-
-### Ekstensi PHP Wajib
-- `mysqli` atau `pdo_mysql`
-- `gd`
-- `mbstring`
-- `openssl`
-- `xml`
-- `zip`
+| Software | Versi Minimum |
+|----------|---------------|
+| Node.js  | 18+ (rekomendasi 20+) |
+| MySQL / MariaDB | 5.7+ / 10.3+ |
+| npm      | 9+ (termasuk di Node.js) |
 
 ---
 
-## 2. Struktur Proyek
+## 2. Struktur Project
 
 ```
 webgis-cinunuk/
-├── frontend/                 # React + Vite (SPA)
-│   ├── public/
-│   │   ├── data/            # File GeoJSON statis
-│   │   └── images/          # Asset gambar
-│   ├── src/
-│   │   ├── components/      # Komponen React
-│   │   ├── pages/           # Halaman aplikasi
-│   │   └── data/            # Konfigurasi
-│   ├── index.html
+├── backend/          # Node.js + Express API
+│   ├── src/          # Source code
+│   ├── scripts/      # DB setup & seed
+│   ├── public/uploads/  # Foto POI (static)
+│   ├── .env          # Konfigurasi (jangan commit)
 │   └── package.json
-├── backend/                  # PHP API
-│   ├── config/
-│   │   └── database.php     # Konfigurasi database
-│   ├── models/
-│   │   ├── Auth.php         # Autentikasi
-│   │   ├── Layer.php        # CRUD layer
-│   │   └── Feature.php      # CRUD fitur
-│   ├── controllers/
-│   ├── admin/               # Panel admin
+├── frontend/         # React + Vite + Leaflet
+│   ├── src/
 │   ├── public/
-│   │   ├── index.php        # Entry point API
-│   │   └── uploads/         # Folder upload foto
-│   └── database.sql         # Schema database
-└── polygon/                 # Data GeoJSON asli
+│   ├── .env          # VITE_API_URL
+│   └── package.json
+└── INSTALLATION.md
 ```
 
 ---
 
-## 3. Instalasi Backend (PHP + MySQL)
+## 3. Setup Database (MySQL)
 
-### 3.1 Setup Database
+1. Pastikan MySQL/MariaDB berjalan di `localhost:3306`.
+2. Buat database (opsional, otomatis via script):
+   ```sql
+   CREATE DATABASE sig_cinunuk CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
 
-1. Buat database:
-```sql
-CREATE DATABASE sig_cinunuk
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-```
+---
 
-2. Import schema:
-```bash
-# Via command line
-mysql -u root -p sig_cinunuk < backend/database.sql
+## 4. Backend Setup
 
-# Atau via phpMyAdmin:
-# Buka phpMyAdmin → pilih database sig_cinunuk
-# Klik tab Import → pilih file database.sql → Go
-```
-
-3. (Opsional) Generate password hash admin:
-```bash
-php -r "echo password_hash('admin123', PASSWORD_DEFAULT);"
-```
-Update hash di tabel users jika perlu.
-
-### 3.2 Konfigurasi Database
-
-Edit file `backend/config/database.php`:
-```php
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'sig_cinunuk');
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Isi password MySQL
-define('DB_CHARSET', 'utf8mb4');
-```
-
-### 3.3 Jalankan Backend
-
-#### Opsi A: Laragon (Windows)
-1. Buka Laragon → Start All
-2. Copy folder `backend/` ke `C:\laragon\www\gis\`
-3. Akses: `http://localhost/gis/admin/login.php`
-
-#### Opsi B: PHP Built-in Server
 ```bash
 cd backend
-php -S localhost:8080 -t public/
+
+# 1. Install dependency
+npm install
+
+# 2. Salin .env.example → .env dan sesuaikan
+#    (DB_HOST, DB_USER, DB_PASS, DB_NAME, JWT_SECRET, PORT)
+cp .env.example .env
+
+# 3. Setup tabel + seed layer default + buat admin (admin/admin123)
+npm run setup
+
+# Atau lengkap dengan import fitur dari folder polygon/
+npm run setup:full
+
+# 4. Jalankan server
+npm start          # production
+npm run dev        # development (auto-reload)
 ```
-Akses: `http://localhost:8080/admin/login.php`
 
-#### Opsi C: XAMPP
-1. Copy folder `backend/` ke `C:\xampp\htdocs\gis\`
-2. Start Apache & MySQL via XAMPP Control Panel
-3. Akses: `http://localhost/gis/admin/login.php`
-
-### 3.4 Login Admin
-1. Buka `http://localhost:8080/admin/login.php`
-2. Username: `admin`
-3. Password: `admin123`
-4. (Ganti password setelah login pertama)
+Server API: `http://localhost:3001`
+- Health check: `GET /api/health`
+- Docs endpoint: `GET /api/layers`, `GET /api/features`
 
 ---
 
-## 4. Instalasi Frontend (React)
+## 5. Frontend Setup
 
-### 4.1 Instal Dependensi
 ```bash
 cd frontend
-npm install
-```
 
-### 4.2 Jalankan Dev Server
-```bash
+# 1. Install dependency
+npm install
+
+# 2. (Opsional) Set API URL production
+#    Default sudah localhost:3001 via Vite proxy
+echo "VITE_API_URL=http://localhost:3001" > .env
+
+# 3. Development server
 npm run dev
 ```
-Akses: `http://localhost:5173`
 
-### 4.3 Build untuk Production
-```bash
-npm run build
+Frontend: `http://localhost:5173`
+- Peta publik: `/#/peta`
+- Admin panel: `/#/admin` (login: **admin / admin123**)
+
+---
+
+## 6. Konfigurasi Production
+
+### Backend `.env`
+```env
+DB_HOST=your-db-host
+DB_PORT=3306
+DB_NAME=sig_cinunuk
+DB_USER=your-user
+DB_PASS=strong-password
+JWT_SECRET=generate-strong-random-string-32-chars-min
+JWT_EXPIRES_IN=7d
+PORT=3001
+UPLOAD_DIR=public/uploads
+MAX_UPLOAD_SIZE=5242880
 ```
-Hasil build: `frontend/dist/`
+
+### Frontend `.env`
+```env
+VITE_API_URL=https://api.domain-anda.com
+```
+
+### CORS (backend/src/server.js)
+Tambahkan domain frontend ke array `origin`:
+```js
+origin: [
+  'https://domain-anda.com',
+  'https://www.domain-anda.com'
+]
+```
+
+### Reverse Proxy (Nginx/Apache)
+Proxy request ke Node.js:
+```nginx
+location /api/ {
+  proxy_pass http://localhost:3001;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host $host;
+  proxy_cache_bypass $http_upgrade;
+}
+location /uploads/ {
+  proxy_pass http://localhost:3001;
+}
+```
 
 ---
 
-## 5. Menjalankan Aplikasi
+## 7. Endpoint API Ringkas
 
-### Mode Development
-1. Jalankan backend: `php -S localhost:8080 -t backend/public/`
-2. Jalankan frontend: `npm run dev` (di folder frontend)
-3. Buka browser: `http://localhost:5173`
-
-### Mode Production
-1. Build frontend: `npm run build`
-2. Deploy `frontend/dist/` ke web server
-3. Deploy `backend/` ke subfolder (misal: `/api/`)
-4. Konfigurasi CORS di `backend/config/database.php`
-
----
-
-## 6. Troubleshooting
-
-| Masalah | Solusi |
-|---------|--------|
-| **PHP error: class not found** | Pastikan `require_once` path benar. Jalankan `composer dump-autoload` jika menggunakan Composer. |
-| **MySQL connection refused** | Pastikan MySQL berjalan. Cek port (default: 3306). |
-| **404 pada API** | Pastikan `public/.htaccess` ada. Apache harus mengizinkan `AllowOverride All`. |
-| **CORS error** | Update `Access-Control-Allow-Origin` di `backend/config/database.php` dengan domain frontend. |
-| **Upload foto gagal** | Cek permission folder `public/uploads/`. Harus writable (755). |
-| **GeoJSON tidak tampil** | Pastikan file `.geojson` ada di `frontend/public/data/`. Cek format JSON valid. |
-| **npm install error** | Coba hapus `node_modules/` dan `package-lock.json`, lalu `npm install` ulang. |
-| **Panel admin tidak bisa login** | Cek hash password di database. Generate ulang dengan `php -r "echo password_hash('admin123', PASSWORD_DEFAULT);"`. |
+| Method | Endpoint | Auth | Keterangan |
+|--------|----------|------|------------|
+| GET | `/api/health` | — | Cek status |
+| POST | `/api/auth/login` | — | Login → JWT |
+| GET | `/api/auth/me` | Bearer | User aktif |
+| GET | `/api/layers?all=1` | — | List layer |
+| GET | `/api/layers/:id` | — | Layer + GeoJSON |
+| POST | `/api/layers` | Bearer | Tambah layer |
+| PUT | `/api/layers/:id` | Bearer | Update layer |
+| DELETE | `/api/layers/:id` | Bearer | Hapus layer |
+| GET | `/api/features` | — | List fitur |
+| POST | `/api/features` | Bearer | Tambah fitur |
+| POST | `/api/features/import` | Bearer | Import GeoJSON |
+| POST | `/api/upload` | Bearer | Upload foto |
 
 ---
 
-## 7. Catatan Penting
+## 8. Checklist Sebelum Deploy
 
-- **Keamanan:** Hapus file `tools/install.php` dan `database.sql` setelah instalasi selesai.
-- **Backup:** Lakukan backup database secara rutin.
-- **Update:** Untuk update data spasial, upload file GeoJSON baru ke `frontend/public/data/` atau gunakan panel admin.
-- **Password:** Ganti password default admin segera setelah login pertama.
+- [ ] `JWT_SECRET` di-generate random (≥32 karakter)
+- [ ] Password admin default diubah
+- [ ] `DB_PASS` diisi kuat
+- [ ] HTTPS aktif (SSL cert)
+- [ ] Backup DB rutin (`mysqldump`)
+- [ ] Folder `public/uploads` writable
+- [ ] CORS domain frontend di-set
+- [ ] `.env` tidak di-commit ke git
 
 ---
 
-**Dibuat oleh:** Tim Pengembang SIG Desa Cinunuk
-**Versi Dokumen:** 1.0
-**Terakhir diperbarui:** Agustus 2026
+## 9. Troubleshooting
+
+| Gejala | Penyebab & Solusi |
+|--------|-------------------|
+| `ECONNREFUSED 3306` | MySQL belum jalan — start service MySQL/MariaDB |
+| `ER_ACCESS_DENIED_ERROR` | User/password DB salah di `.env` |
+| CORS error di browser | Tambah domain frontend ke `cors({ origin: [...] })` di `server.js` |
+| Login admin gagal | Pastikan user `admin` ada di tabel `users` (jalankan `npm run setup`) |
+| Peta kosong / blank | Cek Console DevTools → error JS / network; pastikan API `/api/layers` balik 200 |
+| Upload foto 413/500 | Cek `MAX_UPLOAD_SIZE` & permission folder `public/uploads` |
+| Import GeoJSON 0 fitur | File harus `FeatureCollection` dengan `features[]` array |
+
+---
+
+## 10. Menjalankan Test Cepat
+
+```bash
+# Backend health
+curl http://localhost:3001/api/health
+
+# List layer
+curl http://localhost:3001/api/layers
+
+# Login admin
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+
+Semua response format: `{ "success": true|false, "data": ..., "message": ... }`.

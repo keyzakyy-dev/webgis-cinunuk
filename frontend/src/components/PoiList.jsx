@@ -11,6 +11,8 @@ export default function PoiList({ poiList, selectedId, onSelect }) {
       <ul className="poilist__items">
         {poiList.map((poi) => {
           const kat = KATEGORI[poi.kategori]
+          const warna = poi.kategoriColor || kat?.warna
+          const label = poi.kategoriLabel || kat?.label
           const isActive = selectedId === poi.id
           return (
             <li key={poi.id}>
@@ -21,11 +23,11 @@ export default function PoiList({ poiList, selectedId, onSelect }) {
               >
                 <span
                   className="poilist__dot"
-                  style={{ background: kat?.warna }}
+                  style={{ background: warna }}
                 />
                 <div className="poilist__info">
                   <strong>{poi.nama}</strong>
-                  <span>{kat?.label}</span>
+                  <span>{label}</span>
                 </div>
                 <svg
                   className="poilist__arrow"

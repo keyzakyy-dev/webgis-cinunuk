@@ -3,10 +3,105 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { KATEGORI, POI_CONTOH, findPoi, getGeoPois } from '../data/siteConfig'
+import { SITE } from '../data/siteConfig'
+import { api } from '../api'
 import { buatIkonMarker } from '../components/markerIcon'
 import '../components/markerIcon.css'
 import './LocationDetail.css'
+
+const KATEGORI_META = {
+  pemerintahan: { label: 'Kantor Pemerintahan', warna: '#dc2626' },
+  pendidikan: { label: 'Fasilitas Pendidikan', warna: '#16a34a' },
+  kesehatan: { label: 'Fasilitas Kesehatan', warna: '#f59e0b' },
+  ibadah: { label: 'Tempat Ibadah', warna: '#8b5cf6' },
+  umum: { label: 'Fasilitas Umum', warna: '#0891b2' },
+}
+
+// Pemetaan slug nama layer ke kunci kategori
+const LAYER_KATEGORI = {
+  'sekolah': 'pendidikan',
+  'sekolah-dasar': 'pendidikan',
+  'sekolah-menengah': 'pendidikan',
+  'tempat-ibadah': 'ibadah',
+  'masjid': 'ibadah',
+  'mushola': 'ibadah',
+  'gereja': 'ibadah',
+  'puskesmas': 'kesehatan',
+  'fasilitas-kesehatan': 'kesehatan',
+  'posyandu': 'kesehatan',
+  'kantor-desa': 'pemerintahan',
+  'kantor-pemerintahan': 'pemerintahan',
+  'pemdes': 'pemerintahan',
+}
+
+function slug(name) {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
+
+function kategoriForLayer(layer) {
+  const s = LAYER_KATEGORI[layer?.nama_layer?.toLowerCase().replace(/ /g, '-')]
+  if (s) return s
+  // map known layer labels
+  const n = (layer?.nama_layer || '').toLowerCase()
+  if (n.includes('sekolah')) return 'pendidikan'
+  if (n.includes('ibadah') || n.includes('masjid') || n.includes('gereja')) return 'ibadah'
+  if (n.includes('puskesmas') || n.includes('kesehatan')) return 'kesehatan'
+  if (n.includes('pemerintah') || n.includes('kantor')) return 'pemerintahan'
+  return 'umum'
+}
+
+function featureToDetail(f) {
+  const layerNama = f.layer_name || ''
+  const key = kategoriForLayer({ nama_layer: layerNama })
+  const meta = KATEGORI_META[key] || { label: layerNama || 'Lokasi', warna: f.layer_warna || '#0891b2' }
+
+  let lat = parseFloat(f.lat)
+  let lng = parseFloat(f.lng)
+  
+  if (isNaN(lat) || isNaN(lng)) {
+    try {
+      const g = typeof f.geometry === 'string' ? JSON.parse(f.geometry) : f.geometry
+      if (g?.coordinates) {
+        let c = g.coordinates
+        // Drill down to the first valid [lng, lat] pair for LineString/Polygon/MultiPolygon
+        while (c && Array.isArray(c[0])) c = c[0]
+        if (c && c.length >= 2) {
+          lng = parseFloat(c[0])
+          lat = parseFloat(c[1])
+        }
+      }
+    } catch {}
+  }
+
+  // Jika tetap tidak ada, beri fallback koordinat default agar Leaflet tidak crash
+  if (isNaN(lat) || isNaN(lng)) {
+    lat = -7.17364
+    lng = 107.970141
+  }
+
+  const foto = [f.foto_1, f.foto_2, f.foto_3].filter(Boolean)
+  const deskripsi = f.deskripsi || `${f.nama} merupakan lokasi di Desa ${SITE.desa}.`
+
+  return {
+    id: f.id,
+    nama: f.nama,
+    kategori: key,
+    kategoriColor: meta.warna,
+    kategoriLabel: meta.label,
+    koordinat: [lat, lng],
+    deskripsi,
+    deskripsiLengkap: f.deskripsi_lengkap || deskripsi,
+    alamat: f.alamat || `Desa ${SITE.desa}, Kec. ${SITE.kecamatan}, Kab. ${SITE.kabupaten}`,
+    jamLayanan: f.jam_layanan || 'Sesuai jam operasional setempat',
+    foto,
+    petunjukArah: (() => {
+      try {
+        const v = f.petunjuk_arah ? JSON.parse(f.petunjuk_arah) : []
+        return Array.isArray(v) && v.length ? v : []
+      } catch { return [] }
+    })(),
+  }
+}
 
 function Foto({ src, label, warna }) {
   const [ok, setOk] = useState(true)
@@ -19,10 +114,9 @@ function Foto({ src, label, warna }) {
         <div className="foto__placeholder">
           <svg viewBox="0 0 24 24" width="34" height="34" fill="none" aria-hidden="true">
             <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6" />
-            <circle cx="8.5" cy="10" r="1.6" stroke="currentColor" strokeWidth="1.6" />
-            <path d="m4 17 5-4 4 3 3-2 4 3" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M8.5 10c0 2.2-1.8 4-4 4s-4-1.8-4-4 1.8-4 4-4 4 1.8 4 4Z" stroke="currentColor" strokeWidth="1.6" />
+            <path d="m1 16 8 7 12-13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span>{label}</span>
           <small>Foto akan ditambahkan</small>
         </div>
       )}
@@ -32,27 +126,81 @@ function Foto({ src, label, warna }) {
 
 export default function LocationDetail() {
   const { id } = useParams()
-  const poi = findPoi(id)
+  const navigate = useNavigate()
+  const [poi, setPoi] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [active, setActive] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const [coordCopied, setCoordCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
-  const navigate = useNavigate()
   const copyTimer = useRef(null)
-
-  const fotoList = poi?.foto ?? []
-  const totalFoto = fotoList.length
+  const relatedPois = useRef([])
 
   useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        // Coba ambil detail spesifik dulu via /api/features/:id
+        if (Number.isInteger(Number(id))) {
+          try {
+            const j = await api.get(`/api/features/${id}`)
+            if (j?.success && !cancelled) {
+              setPoi(featureToDetail(j.data))
+              setLoading(false)
+
+              // Ambil daftar terkait secara terpisah (tidak blokir loading utama)
+              ;(async () => {
+                try {
+                  const all = await api.get('/api/features')
+                  if (all?.success && !cancelled) {
+                    relatedPois.current = all.data
+                      .filter((f) => String(f.id) !== String(id))
+                      .slice(0, 9)
+                      .map(featureToDetail)
+                  }
+                } catch {}
+              })()
+              return
+            }
+          } catch { /* offline atau 404, lanjut ke fallback */ }
+        }
+
+        // Fallback: ambil semua fitur dan cari by id
+        const all = await api.get('/api/features')
+        if (all?.success && !cancelled) {
+          const found = all.data.find((f) => String(f.id) === String(id))
+          if (found) {
+            setPoi(featureToDetail(found))
+            // Gunakan data yang sudah ada untuk related POI
+            relatedPois.current = all.data
+              .filter((f) => String(f.id) !== String(id))
+              .slice(0, 9)
+              .map(featureToDetail)
+          }
+        }
+      } catch { /* offline */ } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [id])
+
+  useEffect(() => {
+    if (!poi) return
     setActive(0)
     setLightbox(false)
-  }, [id])
+  }, [id, poi])
+
+  const totalFoto = poi?.foto?.length ?? 0
 
   const geserFoto = useCallback(
     (arah) => {
       setActive((cur) => (cur + arah + totalFoto) % totalFoto)
     },
-    [totalFoto],
+    [totalFoto]
   )
 
   useEffect(() => {
@@ -71,6 +219,25 @@ export default function LocationDetail() {
     }
   }, [lightbox, geserFoto])
 
+  if (loading) {
+    return (
+      <div className="ld-notfound">
+        <p>Memuat…</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="ld-notfound">
+        <h1>Gagal memuat data</h1>
+        <Link to="/peta" className="ld-notfound__btn">
+          ← Kembali ke Peta
+        </Link>
+      </div>
+    )
+  }
+
   if (!poi) {
     return (
       <div className="ld-notfound">
@@ -82,9 +249,8 @@ export default function LocationDetail() {
     )
   }
 
-  const kat = KATEGORI[poi.kategori]
+  const kat = { label: poi.kategoriLabel, warna: poi.kategoriColor }
   const gmaps = `https://www.google.com/maps/search/?api=1&query=${poi.koordinat[0]},${poi.koordinat[1]}`
-
   const koordText = `${poi.koordinat[0]}, ${poi.koordinat[1]}`
 
   function flash(setter) {
@@ -97,27 +263,23 @@ export default function LocationDetail() {
     try {
       await navigator.clipboard.writeText(koordText)
       flash(setCoordCopied)
-    } catch {
-      /* clipboard tidak tersedia */
-    }
+    } catch {}
   }
 
   async function salinLink() {
     try {
       await navigator.clipboard.writeText(window.location.href)
       flash(setLinkCopied)
-    } catch {
-      /* clipboard tidak tersedia */
-    }
+    } catch {}
   }
 
   const shareWa = `https://wa.me/?text=${encodeURIComponent(`${poi.nama} — ${poi.alamat}\n${window.location.href}`)}`
 
   function bukaPetaUtama() {
-    navigate('/peta', { state: { coords: poi.koordinat, poiId: poi.id } })
+    navigate('/peta', { state: { coords: poi.koordinat } })
   }
 
-  const lainnya = [...POI_CONTOH, ...getGeoPois()].filter((p) => String(p.id) !== String(poi.id))
+  const lainnya = relatedPois.current
 
   return (
     <div className="ld">
@@ -140,8 +302,8 @@ export default function LocationDetail() {
       </div>
 
       <header className="ld__head">
-        <span className="ld__badge" style={{ background: kat?.warna }}>
-          {kat?.label}
+        <span className="ld__badge" style={{ background: kat.warna }}>
+          {kat.label}
         </span>
         <h1 className="ld__title">{poi.nama}</h1>
         <p className="ld__addr">{poi.alamat}</p>
@@ -158,7 +320,7 @@ export default function LocationDetail() {
             <Foto
               src={poi.foto?.[active]}
               label={`Foto ${poi.nama}`}
-              warna={kat?.warna ?? '#292524'}
+              warna={kat.warna}
             />
             <span className="ld__gallery-zoom" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -180,7 +342,7 @@ export default function LocationDetail() {
                   }}
                   aria-label={`Foto ${i + 1}`}
                 >
-                  <Foto src={f} label={`Foto ${i + 1}`} warna={kat?.warna ?? '#292524'} />
+                  <Foto src={f} label={`Foto ${i + 1}`} warna={kat.warna} />
                 </button>
               ))}
             </div>
@@ -230,7 +392,7 @@ export default function LocationDetail() {
             <Foto
               src={poi.foto[active]}
               label={`Foto ${active + 1} ${poi.nama}`}
-              warna={kat?.warna ?? '#292524'}
+              warna={kat.warna}
             />
             <figcaption className="lb__caption">
               <span>{poi.nama}</span>
@@ -263,7 +425,7 @@ export default function LocationDetail() {
         <div className="ld__content">
           <section
             className="ld__block ld__block--card"
-            style={{ '--accent': kat?.warna ?? '#292524' }}
+            style={{ '--accent': kat.warna }}
           >
             <p className="ld__eyebrow">Tentang Lokasi</p>
             <h2>Deskripsi</h2>
@@ -272,7 +434,7 @@ export default function LocationDetail() {
 
           <section
             className="ld__block"
-            style={{ '--accent': kat?.warna ?? '#292524' }}
+            style={{ '--accent': kat.warna }}
           >
             <p className="ld__eyebrow">Navigasi</p>
             <h2>Petunjuk Arah</h2>
@@ -295,7 +457,7 @@ export default function LocationDetail() {
             <dl>
               <div>
                 <dt>Kategori</dt>
-                <dd>{kat?.label}</dd>
+                <dd>{kat.label}</dd>
               </div>
               <div>
                 <dt>Alamat</dt>
@@ -364,7 +526,7 @@ export default function LocationDetail() {
               className="ld__minimap-canvas"
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={poi.koordinat} icon={buatIkonMarker(poi.kategori)}>
+              <Marker position={poi.koordinat} icon={buatIkonMarker(poi.kategoriColor || poi.kategori)}>
                 <Popup>{poi.nama}</Popup>
               </Marker>
             </MapContainer>
@@ -385,7 +547,8 @@ export default function LocationDetail() {
           </div>
           <div className="ld__related-grid">
             {lainnya.map((p, i) => {
-              const k = KATEGORI[p.kategori]
+              const warna = p.kategoriColor || '#0891b2'
+              const label = p.kategoriLabel || 'Lokasi'
               return (
                 <Link
                   key={p.id}
@@ -397,12 +560,12 @@ export default function LocationDetail() {
                     <Foto
                       src={p.foto?.[0]}
                       label={p.nama}
-                      warna={k?.warna ?? '#292524'}
+                      warna={warna}
                     />
                   </div>
                   <div className="ld__card-body">
-                    <span className="ld__card-badge" style={{ background: k?.warna }}>
-                      {k?.label}
+                    <span className="ld__card-badge" style={{ background: warna }}>
+                      {label}
                     </span>
                     <h3>{p.nama}</h3>
                     <p>{p.deskripsi}</p>

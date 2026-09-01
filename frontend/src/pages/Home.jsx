@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Reveal from '../components/Reveal'
 import LegendShowcase from '../components/LegendShowcase'
 import RandomNumber from '../components/RandomNumber'
-import { SITE, STATISTIK } from '../data/siteConfig'
+import { SITE } from '../data/siteConfig'
+import { api } from '../api'
 import './Home.css'
 
 function splitChars(text) {
@@ -13,6 +15,22 @@ function splitChars(text) {
 }
 
 export default function Home() {
+  const [stats, setStats] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const json = await api.get('/api/stats')
+        if (!json?.success || cancelled) return
+        setStats(json.data.statistik || [])
+      } catch {
+        /* tidak ada fallback statis */
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
   return (
     <div className="home">
       <section className="hero">
@@ -72,7 +90,7 @@ export default function Home() {
 
       <section className="stats">
         <div className="stats__inner">
-          {STATISTIK.map((s) => (
+          {stats.map((s) => (
             <div key={s.label} className="stats__item">
               <span className="stats__num">
                 <RandomNumber value={s.nilai} />

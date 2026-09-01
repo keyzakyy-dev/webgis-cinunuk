@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { POI_CONTOH, SITE } from '../data/siteConfig'
+import { SITE } from '../data/siteConfig'
 import './SearchBox.css'
 
 export default function SearchBox({ placeholder = 'Cari lokasi…', onPick, extraLocations = [] }) {
@@ -23,19 +23,8 @@ export default function SearchBox({ placeholder = 'Cari lokasi…', onPick, extr
         id: null,
       })
     }
-    for (const poi of POI_CONTOH) {
-      if (poi.nama.toLowerCase().includes(q)) {
-        list.push({
-          type: 'poi',
-          id: poi.id,
-          nama: poi.nama,
-          sub: poi.deskripsi,
-          coords: poi.koordinat,
-        })
-      }
-    }
     for (const loc of extraLocations) {
-      if (loc.nama.toLowerCase().includes(q) && !list.some((x) => x.nama === loc.nama)) {
+      if (loc.nama.toLowerCase().includes(q)) {
         list.push({
           type: 'geopoi',
           nama: loc.nama,

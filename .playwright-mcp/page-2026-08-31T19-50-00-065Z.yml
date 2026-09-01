@@ -1,0 +1,166 @@
+- generic [ref=e317]:
+  - complementary [ref=e318]:
+    - generic [ref=e319]:
+      - img "Logo" [ref=e320]
+      - generic [ref=e321]:
+        - heading "SIG Cinunuk" [level=1] [ref=e322]
+        - generic [ref=e323]: Panel Admin
+    - navigation [ref=e324]:
+      - link "Dashboard" [ref=e325] [cursor=pointer]:
+        - /url: "#/admin"
+      - link "Layers" [active] [ref=e326] [cursor=pointer]:
+        - /url: "#/admin/layers"
+      - link "Fitur / POI" [ref=e327] [cursor=pointer]:
+        - /url: "#/admin/features"
+      - link "Import GeoJSON" [ref=e328] [cursor=pointer]:
+        - /url: "#/admin/import"
+    - generic [ref=e329] [cursor=pointer]: Keluar (admin)
+  - main [ref=e330]:
+    - generic [ref=e348]:
+      - heading "Layer" [level=2] [ref=e349]
+      - link "+ Tambah Layer" [ref=e350] [cursor=pointer]:
+        - /url: "#/admin/layers/new"
+    - table [ref=e352]:
+      - rowgroup [ref=e353]:
+        - row [ref=e354]:
+          - columnheader "Urutan" [ref=e355]
+          - columnheader "Swatch" [ref=e356]
+          - columnheader "Nama" [ref=e357]
+          - columnheader "Tipe" [ref=e358]
+          - columnheader "Grup" [ref=e359]
+          - columnheader "Fitur" [ref=e360]
+          - columnheader "Status" [ref=e361]
+          - columnheader "Aksi" [ref=e362]
+      - rowgroup [ref=e363]:
+        - row [ref=e364]:
+          - cell "1" [ref=e365]
+          - cell [ref=e366]
+          - cell "Batas Desa" [ref=e368]
+          - cell "Polygon" [ref=e369]
+          - cell "Administrasi" [ref=e370]
+          - cell "5" [ref=e371]
+          - cell "Aktif" [ref=e372]
+          - cell [ref=e374]:
+            - generic [ref=e375]:
+              - button "Edit" [ref=e376] [cursor=pointer]
+              - button "Hapus" [ref=e377] [cursor=pointer]
+        - row [ref=e378]:
+          - cell "2" [ref=e379]
+          - cell [ref=e380]
+          - cell "Wilayah RW" [ref=e382]
+          - cell "Polygon" [ref=e383]
+          - cell "Administrasi" [ref=e384]
+          - cell "9" [ref=e385]
+          - cell "Aktif" [ref=e386]
+          - cell [ref=e388]:
+            - generic [ref=e389]:
+              - button "Edit" [ref=e390] [cursor=pointer]
+              - button "Hapus" [ref=e391] [cursor=pointer]
+        - row [ref=e392]:
+          - cell "3" [ref=e393]
+          - cell [ref=e394]
+          - cell "Batas Internal" [ref=e396]
+          - cell "Polygon" [ref=e397]
+          - cell "Administrasi" [ref=e398]
+          - cell "1" [ref=e399]
+          - cell "Nonaktif" [ref=e400]
+          - cell [ref=e402]:
+            - generic [ref=e403]:
+              - button "Edit" [ref=e404] [cursor=pointer]
+              - button "Hapus" [ref=e405] [cursor=pointer]
+        - row [ref=e406]:
+          - cell "4" [ref=e407]
+          - cell [ref=e408]
+          - cell "Pemukiman" [ref=e410]
+          - cell "Polygon" [ref=e411]
+          - cell "Sosial" [ref=e412]
+          - cell "9" [ref=e413]
+          - cell "Aktif" [ref=e414]
+          - cell [ref=e416]:
+            - generic [ref=e417]:
+              - button "Edit" [ref=e418] [cursor=pointer]
+              - button "Hapus" [ref=e419] [cursor=pointer]
+        - row [ref=e420]:
+          - cell "5" [ref=e421]
+          - cell [ref=e422]
+          - cell "Peralihan Hak Tanah" [ref=e424]
+          - cell "Polygon" [ref=e425]
+          - cell "Tanah" [ref=e426]
+          - cell "13" [ref=e427]
+          - cell "Nonaktif" [ref=e428]
+          - cell [ref=e430]:
+            - generic [ref=e431]:
+              - button "Edit" [ref=e432] [cursor=pointer]
+              - button "Hapus" [ref=e433] [cursor=pointer]
+        - row [ref=e434]:
+          - cell "6" [ref=e435]
+          - cell [ref=e436]
+          - cell "Jalan" [ref=e438]
+          - cell "Line" [ref=e439]
+          - cell "Infrastruktur" [ref=e440]
+          - cell "7" [ref=e441]
+          - cell "Aktif" [ref=e442]
+          - cell [ref=e444]:
+            - generic [ref=e445]:
+              - button "Edit" [ref=e446] [cursor=pointer]
+              - button "Hapus" [ref=e447] [cursor=pointer]
+        - row [ref=e448]:
+          - cell "7" [ref=e449]
+          - cell [ref=e450]
+          - cell "Sungai" [ref=e452]
+          - cell "Line" [ref=e453]
+          - cell "Infrastruktur" [ref=e454]
+          - cell "4" [ref=e455]
+          - cell "Aktif" [ref=e456]
+          - cell [ref=e458]:
+            - generic [ref=e459]:
+              - button "Edit" [ref=e460] [cursor=pointer]
+              - button "Hapus" [ref=e461] [cursor=pointer]
+        - row [ref=e462]:
+          - cell "8" [ref=e463]
+          - cell [ref=e464]
+          - cell "Irigasi" [ref=e466]
+          - cell "Line" [ref=e467]
+          - cell "Infrastruktur" [ref=e468]
+          - cell "1" [ref=e469]
+          - cell "Nonaktif" [ref=e470]
+          - cell [ref=e472]:
+            - generic [ref=e473]:
+              - button "Edit" [ref=e474] [cursor=pointer]
+              - button "Hapus" [ref=e475] [cursor=pointer]
+        - row [ref=e476]:
+          - cell "9" [ref=e477]
+          - cell [ref=e478]
+          - cell "Sekolah Dasar" [ref=e480]
+          - cell "Point" [ref=e481]
+          - cell "Fasilitas" [ref=e482]
+          - cell "4" [ref=e483]
+          - cell "Aktif" [ref=e484]
+          - cell [ref=e486]:
+            - generic [ref=e487]:
+              - button "Edit" [ref=e488] [cursor=pointer]
+              - button "Hapus" [ref=e489] [cursor=pointer]
+        - row [ref=e490]:
+          - cell "10" [ref=e491]
+          - cell [ref=e492]
+          - cell "Tempat Ibadah" [ref=e494]
+          - cell "Point" [ref=e495]
+          - cell "Fasilitas" [ref=e496]
+          - cell "2" [ref=e497]
+          - cell "Aktif" [ref=e498]
+          - cell [ref=e500]:
+            - generic [ref=e501]:
+              - button "Edit" [ref=e502] [cursor=pointer]
+              - button "Hapus" [ref=e503] [cursor=pointer]
+        - row [ref=e504]:
+          - cell "11" [ref=e505]
+          - cell [ref=e506]
+          - cell "Titik Batas & Landmark" [ref=e508]
+          - cell "Point" [ref=e509]
+          - cell "Fasilitas" [ref=e510]
+          - cell "19" [ref=e511]
+          - cell "Nonaktif" [ref=e512]
+          - cell [ref=e514]:
+            - generic [ref=e515]:
+              - button "Edit" [ref=e516] [cursor=pointer]
+              - button "Hapus" [ref=e517] [cursor=pointer]

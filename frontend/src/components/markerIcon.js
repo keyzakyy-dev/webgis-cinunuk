@@ -1,8 +1,8 @@
 import L from 'leaflet'
 import { KATEGORI } from '../data/siteConfig'
 
-export function buatIkonMarker(kategori) {
-  const warna = KATEGORI[kategori]?.warna ?? '#292524'
+export function buatIkonMarker(kategoriOrColor) {
+  const warna = KATEGORI[kategoriOrColor]?.warna ?? kategoriOrColor ?? '#292524'
   return L.divIcon({
     className: 'poi-marker',
     html: `<svg viewBox="0 0 24 34" width="26" height="36" aria-hidden="true">

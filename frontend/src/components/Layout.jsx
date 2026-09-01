@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import Marquee from './Marquee'
 import './Layout.css'
 
-export default function Layout({ children }) {
+export default function Layout() {
   const location = useLocation()
   const isMap = location.pathname === '/peta'
 
@@ -21,7 +21,7 @@ export default function Layout({ children }) {
       </div>
       <main className="layout__main">
         <div key={location.pathname} className="page-enter">
-          {children}
+          <Outlet />
         </div>
       </main>
         {!isMap && <Footer />}

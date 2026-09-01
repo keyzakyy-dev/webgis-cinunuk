@@ -1,8 +1,8 @@
-import { useEffect, useRef, useImperativeHandle } from 'react'
+import { useEffect, useRef, useImperativeHandle, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { GeoJSON, MapContainer, Marker, Popup, TileLayer, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { KATEGORI, MAP_CONFIG, SITE, LAYERS, LAYER_KATEGORI } from '../data/siteConfig'
+import { KATEGORI, MAP_CONFIG, SITE } from '../data/siteConfig'
 import { buatIkonMarker } from './markerIcon'
 import './markerIcon.css'
 import './MapView.css'
@@ -15,8 +15,50 @@ function styleGeoJson(layerDef) {
   }
 }
 
+function sanitizeGeometry(geom) {
+  if (!geom || typeof geom !== 'object') return null
+  // Perbaiki geometry yang terbungkus ganda ({type:'Feature', geometry:{...}})
+  if (geom.type === 'Feature' && geom.geometry) return sanitizeGeometry(geom.geometry)
+  const valid = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'GeometryCollection']
+  if (!valid.includes(geom.type)) return null
+  // Validasi Polygon: setiap ring harus >= 4 posisi
+  if (geom.type === 'Polygon') {
+    const rings = (geom.coordinates || []).filter(
+      (r) => Array.isArray(r) && r.length >= 4 && r.every((p) => Array.isArray(p) && p.length >= 2)
+    )
+    if (rings.length === 0) return null
+    return { ...geom, coordinates: rings }
+  }
+  if (geom.type === 'MultiPolygon') {
+    const polys = (geom.coordinates || [])
+      .map((poly) => (poly || []).filter((r) => Array.isArray(r) && r.length >= 4))
+      .filter((poly) => poly.length > 0)
+    if (polys.length === 0) return null
+    return { ...geom, coordinates: polys }
+  }
+  if (geom.type === 'LineString') {
+    const coords = (geom.coordinates || []).filter((p) => Array.isArray(p) && p.length >= 2)
+    if (coords.length < 2) return null
+    return { ...geom, coordinates: coords }
+  }
+  return geom
+}
+
+function sanitizeGeoJson(data) {
+  if (!data || !Array.isArray(data.features)) return data
+  const features = data.features
+    .map((f) => {
+      const geometry = sanitizeGeometry(f.geometry)
+      if (!geometry) return null
+      return { ...f, geometry }
+    })
+    .filter(Boolean)
+  return { ...data, features }
+}
+
 function LayerGeoJson({ layerDef, data }) {
   if (!data) return null
+  const safeData = useMemo(() => sanitizeGeoJson(data), [data])
   const styleFn = styleGeoJson(layerDef)
   const onEachFeature = (feature, layer) => {
     const name = feature?.properties?.Name || layerDef.label
@@ -26,7 +68,8 @@ function LayerGeoJson({ layerDef, data }) {
   }
   return (
     <GeoJSON
-      data={data}
+      key={layerDef.id}
+      data={safeData}
       style={styleFn}
       onEachFeature={onEachFeature}
     />
@@ -38,6 +81,7 @@ export default function MapView({
   poiList,
   layerData = {},
   activeLayers = [],
+  layerDefs = [],
   kategoriAktif,
   onSelectPoi,
   height = '100%',
@@ -46,6 +90,12 @@ export default function MapView({
   const markerRefs = useRef({})
   const location = useLocation()
   const navigate = useNavigate()
+
+  const layerById = useMemo(() => {
+    const map = {}
+    for (const l of layerDefs) map[l.id] = l
+    return map
+  }, [layerDefs])
 
   const visiblePoi =
     kategoriAktif === null
@@ -110,7 +160,7 @@ export default function MapView({
         />
 
         {activeLayers.map((id) => {
-          const layerDef = LAYERS.find((l) => l.id === id)
+          const layerDef = layerById[id]
           if (!layerDef || layerDef.type === 'point') return null
           return (
             <LayerGeoJson key={layerDef.id} layerDef={layerDef} data={layerData[layerDef.id]} />
@@ -121,7 +171,7 @@ export default function MapView({
           <Marker
             key={poi.id}
             position={poi.koordinat}
-            icon={buatIkonMarker(poi.kategori)}
+            icon={buatIkonMarker(poi.kategoriColor || poi.kategori)}
             ref={(el) => {
               markerRefs.current[poi.id] = el
             }}
@@ -130,7 +180,7 @@ export default function MapView({
             <Popup maxWidth={300} minWidth={220}>
               <div
                 className="mapwrap__popup"
-                style={{ '--accent': KATEGORI[poi.kategori]?.warna ?? '#292524' }}
+                style={{ '--accent': poi.kategoriColor || KATEGORI[poi.kategori]?.warna || '#292524' }}
               >
                 <div className="mapwrap__popup-media">
                   <img
@@ -142,7 +192,7 @@ export default function MapView({
                 <div className="mapwrap__popup-body">
                   <span className="mapwrap__popup-badge">
                     <span className="mapwrap__popup-dot" />
-                    {KATEGORI[poi.kategori]?.label}
+                    {poi.kategoriLabel || KATEGORI[poi.kategori]?.label}
                   </span>
                   <strong className="mapwrap__popup-title">{poi.nama}</strong>
                   <p className="mapwrap__popup-desc">{poi.deskripsi}</p>
@@ -170,66 +220,6 @@ export default function MapView({
             </Popup>
           </Marker>
         ))}
-
-        {activeLayers.map((id) => {
-          const layerDef = LAYERS.find((l) => l.id === id)
-          if (!layerDef || layerDef.type !== 'point') return null
-          const data = layerData[layerDef.id]
-          if (!data) return null
-          const points = (data.features || []).filter((f) => f.geometry?.type === 'Point')
-          return points.map((f, i) => {
-            const lat = f.geometry.coordinates[1]
-            const lng = f.geometry.coordinates[0]
-            const poiId = `${layerDef.id}-${i}`
-            const kategori = LAYER_KATEGORI[layerDef.id] ?? 'umum'
-            const nama = f.properties?.Name || layerDef.label
-            const deskripsi = f.properties?.description || `Lokasi ${layerDef.label.toLowerCase()} di Desa ${SITE.desa}.`
-            return (
-              <Marker
-                key={poiId}
-                position={[lat, lng]}
-                icon={buatIkonMarker(kategori)}
-              >
-                <Tooltip sticky direction="top" offset={[0, -4]}>
-                  {nama}
-                </Tooltip>
-                <Popup maxWidth={300} minWidth={220}>
-                  <div className="mapwrap__popup" style={{ '--accent': KATEGORI[kategori]?.warna ?? layerDef.style.color }}>
-                    <div className="mapwrap__popup-body">
-                      <span className="mapwrap__popup-badge">
-                        <span className="mapwrap__popup-dot" />
-                        {layerDef.label}
-                      </span>
-                      <strong className="mapwrap__popup-title">{nama}</strong>
-                      {deskripsi && (
-                        <p className="mapwrap__popup-desc">{deskripsi}</p>
-                      )}
-                      <div className="mapwrap__popup-footer">
-                        <span className="mapwrap__popup-loc">
-                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true">
-                            <path d="M12 21s-6-5.5-6-10a6 6 0 1 1 12 0c0 4.5-6 10-6 10Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                            <circle cx="12" cy="11" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-                          </svg>
-                          {SITE.desa}
-                        </span>
-                        <button
-                          type="button"
-                          className="mapwrap__popup-btn"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/lokasi/${poiId}`)
-                          }}
-                        >
-                          Detail
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            )
-          })
-        })}
       </MapContainer>
 
       <div className="mapwrap__controls">

@@ -1,0 +1,102 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic "Daftar lokasi Desa Cinunuk" [ref=e5]:
+      - generic [ref=e6]: Daftar Lokasi
+      - generic [ref=e9]:
+        - link "Kantor Desa Cinunuk Kantor Pemerintahan" [ref=e10] [cursor=pointer]:
+          - /url: "#/lokasi/1"
+          - text: Kantor Desa Cinunuk
+          - generic [ref=e12]: Kantor Pemerintahan
+        - link "SDN Cinunuk Fasilitas Pendidikan" [ref=e13] [cursor=pointer]:
+          - /url: "#/lokasi/2"
+          - text: SDN Cinunuk
+          - generic [ref=e15]: Fasilitas Pendidikan
+        - link "Puskesmas Pembantu Cinunuk Fasilitas Kesehatan" [ref=e16] [cursor=pointer]:
+          - /url: "#/lokasi/3"
+          - text: Puskesmas Pembantu Cinunuk
+          - generic [ref=e18]: Fasilitas Kesehatan
+        - link "Masjid Desa Cinunuk Tempat Ibadah" [ref=e19] [cursor=pointer]:
+          - /url: "#/lokasi/4"
+          - text: Masjid Desa Cinunuk
+          - generic [ref=e21]: Tempat Ibadah
+        - link "Lapangan Desa Fasilitas Umum" [ref=e22] [cursor=pointer]:
+          - /url: "#/lokasi/5"
+          - text: Lapangan Desa
+          - generic [ref=e24]: Fasilitas Umum
+        - link "Madrasah Cinunuk Fasilitas Pendidikan" [ref=e25] [cursor=pointer]:
+          - /url: "#/lokasi/6"
+          - text: Madrasah Cinunuk
+          - generic [ref=e27]: Fasilitas Pendidikan
+        - link "Kantor Desa Cinunuk Kantor Pemerintahan" [ref=e28] [cursor=pointer]:
+          - /url: "#/lokasi/1"
+          - text: Kantor Desa Cinunuk
+          - generic [ref=e30]: Kantor Pemerintahan
+        - link "SDN Cinunuk Fasilitas Pendidikan" [ref=e31] [cursor=pointer]:
+          - /url: "#/lokasi/2"
+          - text: SDN Cinunuk
+          - generic [ref=e33]: Fasilitas Pendidikan
+        - link "Puskesmas Pembantu Cinunuk Fasilitas Kesehatan" [ref=e34] [cursor=pointer]:
+          - /url: "#/lokasi/3"
+          - text: Puskesmas Pembantu Cinunuk
+          - generic [ref=e36]: Fasilitas Kesehatan
+        - link "Masjid Desa Cinunuk Tempat Ibadah" [ref=e37] [cursor=pointer]:
+          - /url: "#/lokasi/4"
+          - text: Masjid Desa Cinunuk
+          - generic [ref=e39]: Tempat Ibadah
+        - link "Lapangan Desa Fasilitas Umum" [ref=e40] [cursor=pointer]:
+          - /url: "#/lokasi/5"
+          - text: Lapangan Desa
+          - generic [ref=e42]: Fasilitas Umum
+        - link "Madrasah Cinunuk Fasilitas Pendidikan" [ref=e43] [cursor=pointer]:
+          - /url: "#/lokasi/6"
+          - text: Madrasah Cinunuk
+          - generic [ref=e45]: Fasilitas Pendidikan
+    - banner [ref=e46]:
+      - generic [ref=e48]:
+        - link "Logo Desa Cinunuk Pemerintah Desa Cinunuk Kec. Wanaraja · Kab. Garut · Prov. Jawa Barat" [ref=e49] [cursor=pointer]:
+          - /url: "#/"
+          - img "Logo Desa Cinunuk" [ref=e50]
+          - generic [ref=e51]:
+            - strong [ref=e52]: Pemerintah Desa Cinunuk
+            - generic [ref=e53]: Kec. Wanaraja · Kab. Garut · Prov. Jawa Barat
+        - navigation "Navigasi utama" [ref=e54]:
+          - link "Beranda" [ref=e55] [cursor=pointer]:
+            - /url: "#/"
+          - link "Peta" [ref=e56] [cursor=pointer]:
+            - /url: "#/peta"
+  - main [ref=e57]
+  - contentinfo [ref=e58]:
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - img "Logo Desa Cinunuk" [ref=e62]
+          - generic [ref=e63]:
+            - strong [ref=e64]: Pemerintah Desa Cinunuk
+            - generic [ref=e65]: Kecamatan Wanaraja · Kabupaten Garut · Jawa Barat
+        - generic [ref=e66]:
+          - heading "Navigasi" [level=5] [ref=e67]
+          - list [ref=e68]:
+            - listitem [ref=e69]:
+              - link "Beranda" [ref=e70] [cursor=pointer]:
+                - /url: "#/"
+            - listitem [ref=e71]:
+              - link "Peta Interaktif" [ref=e72] [cursor=pointer]:
+                - /url: "#/peta"
+            - listitem [ref=e73]:
+              - link "Tentang & Kontak" [ref=e74] [cursor=pointer]:
+                - /url: "#/"
+        - generic [ref=e75]:
+          - heading "Data & Sumber" [level=5] [ref=e76]
+          - paragraph [ref=e77]: Survei internal desa & data BIG (Badan Informasi Geospasial)
+          - paragraph [ref=e78]: "Terakhir diperbarui: Agustus 2026"
+        - generic [ref=e79]:
+          - heading "Kontak" [level=5] [ref=e80]
+          - list [ref=e81]:
+            - listitem [ref=e82]:
+              - link "pemdes@cinunuk.desa.id" [ref=e83] [cursor=pointer]:
+                - /url: mailto:pemdes@cinunuk.desa.id
+            - listitem [ref=e88]:
+              - generic [ref=e89]: (022) 000-0000
+      - generic [ref=e93]:
+        - generic [ref=e94]: © 2026 Pemerintah Desa Cinunuk. Hak cipta dilindungi.
+        - generic [ref=e95]: Sistem Informasi Geografis Wilayah · Wanaraja, Garut

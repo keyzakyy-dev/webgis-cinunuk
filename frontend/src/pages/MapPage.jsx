@@ -4,118 +4,169 @@ import PoiList from '../components/PoiList'
 import SearchBox from '../components/SearchBox'
 import Loading from '../components/Loading'
 import { Link, useNavigate } from 'react-router-dom'
-import { KATEGORI, POI_CONTOH, LAYERS, LAYER_KATEGORI, setGeoPois, getGeoPois, findPoi, SITE, API_URL } from '../data/siteConfig'
+import { SITE } from '../data/siteConfig'
+import { api } from '../api'
 import './MapPage.css'
 
-const DEFAULT_LAYERS = LAYERS.filter((l) => l.defaultOn).map((l) => l.id)
 const { desa: SITE_NAMA_DESA, kecamatan: SITE_KECAMATAN, kabupaten: SITE_KABUPATEN } = SITE
 
-function geoFeatureToPoi(layerDef, feature, index) {
-  const lat = feature.geometry.coordinates[1]
-  const lng = feature.geometry.coordinates[0]
-  const kategori = LAYER_KATEGORI[layerDef.id] ?? 'umum'
-  const nama = feature.properties?.Name || layerDef.label
+function buildLayerId(name) {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
+
+function parsePetunjukArah(raw) {
+  if (!raw) return []
+  try {
+    const v = JSON.parse(raw)
+    return Array.isArray(v) ? v : []
+  } catch {
+    return []
+  }
+}
+
+// Layer dari backend menjadi definisi layer yang dikonsumsi MapView
+function layersFromApi(apiLayers) {
+  return apiLayers.map((l) => ({
+    id: buildLayerId(l.nama_layer),
+    label: l.nama_layer,
+    type: l.tipe,
+    group: l.grup || 'Lainnya',
+    style: {
+      color: l.warna || '#292524',
+      weight: 2,
+      fillColor: l.warna || '#292524',
+      fillOpacity: 0.1,
+      ...(l.tipe === 'point' ? { radius: 8 } : {}),
+    },
+    legendSymbol: l.tipe === 'point' ? 'marker' : l.tipe === 'line' ? 'line' : 'polygon',
+    legendColor: l.warna || '#292524',
+    defaultOn: !!l.is_active,
+    apiId: l.id,
+  }))
+}
+
+function kategoriForLayer(layerName) {
+  const n = (layerName || '').toLowerCase()
+  if (n.includes('sekolah')) return { key: 'pendidikan', label: 'Fasilitas Pendidikan', warna: '#16a34a' }
+  if (n.includes('ibadah') || n.includes('masjid') || n.includes('gereja') || n.includes('mushola')) return { key: 'ibadah', label: 'Tempat Ibadah', warna: '#8b5cf6' }
+  if (n.includes('puskesmas') || n.includes('kesehatan') || n.includes('posyandu')) return { key: 'kesehatan', label: 'Fasilitas Kesehatan', warna: '#f59e0b' }
+  if (n.includes('kantor') || n.includes('pemerintahan') || n.includes('pemdes')) return { key: 'pemerintahan', label: 'Kantor Pemerintahan', warna: '#dc2626' }
+  return { key: 'umum', label: 'Fasilitas Umum', warna: '#0891b2' }
+}
+
+function featureToPoi(feature) {
+  // Hanya fitur dari layer point yang jadi POI marker
+  if (feature.layer_type !== 'point') return null
+
+  let geom = null;
+  if (feature.geometry) {
+    try {
+      geom = typeof feature.geometry === 'string' ? JSON.parse(feature.geometry) : feature.geometry;
+    } catch (err) {
+      console.warn('Invalid geometry JSON for feature ID:', feature.id);
+    }
+  }
+  let c = geom?.coordinates
+  let lat = parseFloat(feature.lat)
+  let lng = parseFloat(feature.lng)
+
+  if (isNaN(lat) || isNaN(lng)) {
+    if (c) {
+      while (c && Array.isArray(c[0])) c = c[0]
+      if (c && c.length >= 2) {
+        lng = parseFloat(c[0])
+        lat = parseFloat(c[1])
+      }
+    }
+  }
+
+  if (isNaN(lat) || isNaN(lng)) return null
+
+  const kat = kategoriForLayer(feature.layer_name)
+  const foto = [feature.foto_1, feature.foto_2, feature.foto_3].filter(Boolean)
+  const deskripsi = feature.deskripsi || `${feature.nama} merupakan ${(feature.layer_name || 'lokasi').toLowerCase()} di Desa ${SITE_NAMA_DESA}.`
+  const alamat = feature.alamat || `Desa ${SITE_NAMA_DESA}, Kec. ${SITE_KECAMATAN}, Kab. ${SITE_KABUPATEN}`
+
   return {
-    id: `${layerDef.id}-${index}`,
-    nama,
-    kategori,
+    id: feature.id,
+    nama: feature.nama,
+    kategori: kat.key,
+    kategoriColor: kat.warna,
+    kategoriLabel: kat.label,
+    layerId: feature.layer_id,
     koordinat: [lat, lng],
-    deskripsi: `${nama} merupakan ${layerDef.label.toLowerCase()} di Desa ${SITE_NAMA_DESA}.`,
-    deskripsiLengkap:
-      `${nama} merupakan ${layerDef.label.toLowerCase()} yang berada di Desa ${SITE_NAMA_DESA}, Kec. ${SITE_KECAMATAN}, Kab. ${SITE_KABUPATEN}. Lokasi ini dapat ditemukan pada peta wilayah desa.`,
-    alamat: `Desa ${SITE_NAMA_DESA}, Kec. ${SITE_KECAMATAN}, Kab. ${SITE_KABUPATEN}`,
-    jamLayanan: 'Sesuai jam operasional setempat',
-    foto: [],
-    petunjukArah: [
-      `Lokasi terletak di Desa ${SITE_NAMA_DESA}, Kec. ${SITE_KECAMATAN}, Kab. ${SITE_KABUPATEN}.`,
-      `Klik "Google Maps" pada popup untuk melihat rute menuju ${nama}.`,
-    ],
+    deskripsi,
+    deskripsiLengkap: feature.deskripsi_lengkap || deskripsi,
+    alamat,
+    jamLayanan: feature.jam_layanan || 'Sesuai jam operasional setempat',
+    foto,
+    petunjukArah: parsePetunjukArah(feature.petunjuk_arah),
   }
 }
 
 export default function MapPage() {
+  const [mergedLayers, setMergedLayers] = useState([])
   const [layerData, setLayerData] = useState({})
-  const [activeLayers, setActiveLayers] = useState(DEFAULT_LAYERS)
+  const [pois, setPois] = useState([])
+  const [activeLayers, setActiveLayers] = useState([])
   const [activeKategori, setActiveKategori] = useState(null)
   const [selectedPoiId, setSelectedPoiId] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState('')
   const mapApiRef = useRef(null)
   const layersRef = useRef(null)
   const navigate = useNavigate()
 
-  const searchLocations = getGeoPois().map((p) => ({
+  const searchLocations = pois.map((p) => ({
     id: p.id,
     nama: p.nama,
-    sub: KATEGORI[p.kategori]?.label ?? 'Lokasi',
+    sub: p.kategoriLabel,
     coords: p.koordinat,
   }))
 
-  // Memuat data layer. Sumber: API backend, fallback ke file statis.
   useEffect(() => {
     let cancelled = false
 
-    // Peta nama layer (backend) → id layer di DB
-    function mapToData(apiLayers) {
-      const byName = {}
-      for (const l of apiLayers) byName[l.nama_layer] = l.id
-      return byName
-    }
-
     async function load() {
-      // 1. Coba ambil daftar layer dari API
-      let byName = null
       try {
-        const res = await fetch(`${API_URL}/api/layers?all=1`)
-        const json = await res.json()
-        if (json?.success) byName = mapToData(json.data)
-      } catch {
-        byName = null
-      }
+        const json = await api.get('/api/layers?all=1')
+        if (!json?.success) throw new Error('Gagal memuat data')
+        const apiLayers = json.data
+        const merged = layersFromApi(apiLayers)
+        if (cancelled) return
+        setMergedLayers(merged)
+        setActiveLayers(merged.filter((l) => l.defaultOn).map((l) => l.id))
 
-      // 2. Ambil GeoJSON tiap layer (dari API jika ada, else file statis)
-      const entries = await Promise.all(
-        LAYERS.map(async (l) => {
-          if (byName && byName[l.label] != null) {
+        const entries = await Promise.all(
+          merged.map(async (l) => {
             try {
-              const r = await fetch(`${API_URL}/api/layers/${byName[l.label]}`)
-              const j = await r.json()
+              const j = await api.get(`/api/layers/${l.apiId}`)
               if (j?.success && j.data?.geojson) return [l.id, j.data.geojson]
-            } catch {
-              /* fallback ke file */
-            }
-          }
-          try {
-            const r = await fetch(l.file)
-            return r.ok ? [l.id, await r.json()] : [l.id, null]
-          } catch {
+            } catch { /* lewati layer yang gagal */ }
             return [l.id, null]
-          }
-        })
-      )
+          })
+        )
+        if (cancelled) return
+        const data = {}
+        entries.filter(Boolean).forEach(([id, d]) => { data[id] = d })
+        setLayerData(data)
 
-      if (cancelled) return
-      const data = {}
-      entries.filter(Boolean).forEach(([id, d]) => {
-        data[id] = d
-      })
-      setLayerData(data)
-
-      const geoPois = []
-      for (const layer of LAYERS) {
-        if (layer.type !== 'point') continue
-        const ld = data[layer.id]
-        if (!ld) continue
-        const pts = (ld.features || []).filter((f) => f.geometry?.type === 'Point')
-        pts.forEach((f, i) => geoPois.push(geoFeatureToPoi(layer, f, i)))
+        const fj = await api.get('/api/features')
+        if (!fj?.success) throw new Error('Gagal memuat fitur')
+        const allPois = fj.data.map(featureToPoi).filter(Boolean)
+        if (cancelled) return
+        setPois(allPois)
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Backend tidak dapat dihubungi')
+      } finally {
+        if (!cancelled) setLoaded(true)
       }
-      setGeoPois(geoPois)
     }
 
     load()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
@@ -136,8 +187,11 @@ export default function MapPage() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [layersOpen])
 
-  const allPois = [...POI_CONTOH, ...getGeoPois()]
-  const selectedPoi = findPoi(selectedPoiId)
+  const selectedPoi = pois.find((p) => String(p.id) === String(selectedPoiId)) || null
+
+  const visiblePois = activeKategori === null
+    ? pois
+    : pois.filter((p) => p.kategori === activeKategori)
 
   function toggleLayer(id) {
     setActiveLayers((prev) =>
@@ -147,14 +201,9 @@ export default function MapPage() {
 
   function handleSelect(id) {
     setSelectedPoiId(id)
-    const poi = findPoi(id)
+    const poi = pois.find((p) => String(p.id) === String(id))
     if (poi) setActiveKategori(null)
-    const markerPoi = POI_CONTOH.find((p) => p.id === id)
-    if (markerPoi) {
-      mapApiRef.current?.flyToPoi(id)
-    } else if (poi?.koordinat) {
-      mapApiRef.current?.flyToCoords(poi.koordinat)
-    }
+    if (poi?.koordinat) mapApiRef.current?.flyToCoords(poi.koordinat)
   }
 
   function handleSearchPick(item) {
@@ -190,9 +239,9 @@ export default function MapPage() {
             <div className="mappage__info-kategori">
               <span
                 className="mappage__info-dot"
-                style={{ background: KATEGORI[selectedPoi.kategori]?.warna }}
+                style={{ background: selectedPoi.kategoriColor }}
               />
-              {KATEGORI[selectedPoi.kategori]?.label}
+              {selectedPoi.kategoriLabel}
             </div>
             <p className="mappage__info-desc">{selectedPoi.deskripsi}</p>
             <Link
@@ -204,7 +253,7 @@ export default function MapPage() {
           </div>
         ) : (
           <PoiList
-            poiList={allPois}
+            poiList={visiblePois}
             selectedId={selectedPoiId}
             onSelect={handleSelect}
           />
@@ -212,12 +261,14 @@ export default function MapPage() {
       </aside>
 
       <div className="mappage__map">
-        {Object.keys(layerData).length === 0 && <Loading text="Memuat data wilayah…" />}
+        {!loaded && !error && <Loading text="Memuat data wilayah…" />}
+        {error && <div className="mappage__error">{error}</div>}
         <MapView
           ref={mapApiRef}
-          poiList={POI_CONTOH}
+          poiList={visiblePois}
           layerData={layerData}
           activeLayers={activeLayers}
+          layerDefs={mergedLayers}
           kategoriAktif={activeKategori}
           onSelectPoi={setSelectedPoiId}
         />
@@ -248,7 +299,7 @@ export default function MapPage() {
           {layersOpen && (
             <div className="layerpanel__dropdown" role="group" aria-label="Filter layer peta">
               {Object.entries(
-                LAYERS.reduce((acc, l) => {
+                mergedLayers.reduce((acc, l) => {
                   ;(acc[l.group] = acc[l.group] || []).push(l)
                   return acc
                 }, {})

@@ -1,9 +1,37 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { KATEGORI, POI_CONTOH } from '../data/siteConfig'
+import { API_URL } from '../data/siteConfig'
 import './Marquee.css'
 
+function kategoriForLayer(layerName) {
+  const n = (layerName || '').toLowerCase()
+  if (n.includes('sekolah')) return '#16a34a'
+  if (n.includes('ibadah') || n.includes('masjid')) return '#8b5cf6'
+  if (n.includes('puskesmas') || n.includes('kesehatan')) return '#f59e0b'
+  if (n.includes('kantor')) return '#dc2626'
+  return '#0891b2'
+}
+
 export default function Marquee() {
-  const items = [...POI_CONTOH, ...POI_CONTOH]
+  const [items, setItems] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/features`)
+        const json = await res.json()
+        if (json?.success && !cancelled) {
+          setItems(json.data.filter((f) => f.is_active).slice(0, 30))
+        }
+      } catch { /* offline — tampilkan kosong */ }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  if (items.length === 0) return null
+
+  const loop = [...items, ...items]
 
   return (
     <div className="marquee" aria-label="Daftar lokasi Desa Cinunuk">
@@ -13,7 +41,7 @@ export default function Marquee() {
       </div>
       <div className="marquee__viewport">
         <div className="marquee__track">
-          {items.map((poi, i) => (
+          {loop.map((poi, i) => (
             <Link
               key={i}
               to={`/lokasi/${poi.id}`}
@@ -22,10 +50,10 @@ export default function Marquee() {
             >
               <span
                 className="marquee__dot"
-                style={{ background: KATEGORI[poi.kategori]?.warna }}
+                style={{ background: kategoriForLayer(poi.layer_name) }}
               />
               {poi.nama}
-              <span className="marquee__cat">{KATEGORI[poi.kategori]?.label}</span>
+              <span className="marquee__cat">{poi.layer_name}</span>
             </Link>
           ))}
         </div>
