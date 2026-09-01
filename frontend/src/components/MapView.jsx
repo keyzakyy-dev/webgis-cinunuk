@@ -328,10 +328,10 @@ export default function MapView({
           onMapClick={handleMapClick}
         />
 
-        {/* LAYER GEOJSON */}
+        {/* LAYER GEOJSON (Hanya untuk Polygon dan Line, Point dirender lewat Marker POI) */}
         {activeLayers.map((id) => {
           const layerDef = layerById[id]
-          if (!layerDef || layerDef.manajemen === 'poi') return null
+          if (!layerDef || layerDef.type === 'point' || layerDef.manajemen === 'poi') return null
           const opacity = layerOpacities[id] !== undefined ? layerOpacities[id] : 1
           return (
             <LayerGeoJson
