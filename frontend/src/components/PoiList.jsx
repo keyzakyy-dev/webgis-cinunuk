@@ -1,4 +1,3 @@
-import { KATEGORI } from '../data/siteConfig'
 import './PoiList.css'
 
 export default function PoiList({ poiList, selectedId, onSelect }) {
@@ -10,9 +9,8 @@ export default function PoiList({ poiList, selectedId, onSelect }) {
       </div>
       <ul className="poilist__items">
         {poiList.map((poi) => {
-          const kat = KATEGORI[poi.kategori]
-          const warna = poi.kategoriColor || kat?.warna
-          const label = poi.kategoriLabel || kat?.label
+          const warna = poi.layerWarna || '#0891b2'
+          const labelLayer = poi.layerNama || 'Lokasi'
           const isActive = selectedId === poi.id
           return (
             <li key={poi.id}>
@@ -27,7 +25,14 @@ export default function PoiList({ poiList, selectedId, onSelect }) {
                 />
                 <div className="poilist__info">
                   <strong>{poi.nama}</strong>
-                  <span>{label}</span>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <span>{labelLayer}</span>
+                    {poi.kategoriFitur && (
+                      <small style={{ color: 'var(--muted)', fontSize: '0.7rem' }}>
+                        &bull; {poi.kategoriFitur}
+                      </small>
+                    )}
+                  </div>
                 </div>
                 <svg
                   className="poilist__arrow"

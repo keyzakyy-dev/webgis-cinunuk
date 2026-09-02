@@ -45,22 +45,6 @@ function layersFromApi(apiLayers) {
   }))
 }
 
-function kategoriForLayer(layerName, kategori) {
-  if (kategori) {
-    const k = kategori.toLowerCase()
-    if (k.includes('sekolah') || k.includes('pendidikan') || k.includes('sd ') || k.includes('smp') || k.includes('sma') || k.includes('madrasah'))
-      return { key: 'pendidikan', label: kategori, warna: '#16a34a' }
-    if (k.includes('ibadah') || k.includes('masjid') || k.includes('mushola') || k.includes('gereja'))
-      return { key: 'ibadah', label: kategori, warna: '#8b5cf6' }
-    if (k.includes('kesehatan') || k.includes('puskesmas') || k.includes('klinik') || k.includes('posyandu'))
-      return { key: 'kesehatan', label: kategori, warna: '#f59e0b' }
-    if (k.includes('kantor') || k.includes('pemerintahan') || k.includes('pemdes'))
-      return { key: 'pemerintahan', label: kategori, warna: '#dc2626' }
-    return { key: 'umum', label: kategori, warna: '#0891b2' }
-  }
-  return { key: 'umum', label: 'Fasilitas Umum', warna: '#0891b2' }
-}
-
 function featureToPoi(feature) {
   if (feature.layer_manajemen !== 'poi' && feature.layer_type !== 'point') return null
 
@@ -88,17 +72,16 @@ function featureToPoi(feature) {
 
   if (isNaN(lat) || isNaN(lng)) return null
 
-  const kat = kategoriForLayer(feature.layer_name, feature.kategori)
   const foto = [feature.foto_1, feature.foto_2, feature.foto_3].filter(Boolean)
-  const deskripsi = feature.deskripsi || `${feature.nama} merupakan ${(feature.layer_name || 'lokasi').toLowerCase()} di Desa ${SITE_NAMA_DESA}.`
+  const deskripsi = feature.deskripsi || `${feature.nama} merupakan lokasi pada layer ${feature.layer_name || 'lokasi'} di Desa ${SITE_NAMA_DESA}.`
   const alamat = feature.alamat || `Desa ${SITE_NAMA_DESA}, Kec. ${SITE_KECAMATAN}, Kab. ${SITE_KABUPATEN}`
 
   return {
     id: feature.id,
     nama: feature.nama,
-    kategori: kat.key,
-    kategoriColor: kat.warna,
-    kategoriLabel: kat.label,
+    layerNama: feature.layer_name || 'Lokasi',
+    layerWarna: feature.layer_warna || '#0891b2',
+    kategoriFitur: feature.kategori || '',
     layerId: feature.layer_id,
     layerSlug: buildLayerId(feature.layer_name || ''),
     koordinat: [lat, lng],
@@ -276,9 +259,14 @@ export default function MapPage() {
             <div className="mappage__info-kategori">
               <span
                 className="mappage__info-dot"
-                style={{ background: selectedPoi.kategoriColor }}
+                style={{ background: selectedPoi.layerWarna }}
               />
-              {selectedPoi.kategoriLabel}
+              <span>{selectedPoi.layerNama}</span>
+              {selectedPoi.kategoriFitur && (
+                <span className="admin__chip admin__chip--soft" style={{ marginLeft: 'auto', fontSize: '0.72rem' }}>
+                  {selectedPoi.kategoriFitur}
+                </span>
+              )}
             </div>
             <p className="mappage__info-desc">{selectedPoi.deskripsi}</p>
             <Link

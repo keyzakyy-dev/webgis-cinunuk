@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { GeoJSON, MapContainer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { KATEGORI, MAP_CONFIG, SITE } from '../data/siteConfig'
+import { MAP_CONFIG, SITE } from '../data/siteConfig'
 import { buatIkonMarker } from './markerIcon'
 import './markerIcon.css'
 import './MapView.css'
@@ -380,7 +380,7 @@ export default function MapView({
           <Marker
             key={poi.id}
             position={poi.koordinat}
-            icon={buatIkonMarker(poi.kategoriColor || poi.kategori)}
+            icon={buatIkonMarker(poi.layerWarna || '#0891b2')}
             ref={(el) => {
               markerRefs.current[poi.id] = el
             }}
@@ -389,7 +389,7 @@ export default function MapView({
             <Popup maxWidth={300} minWidth={220}>
               <div
                 className="mapwrap__popup"
-                style={{ '--accent': poi.kategoriColor || KATEGORI[poi.kategori]?.warna || '#292524' }}
+                style={{ '--accent': poi.layerWarna || '#292524' }}
               >
                 <div className="mapwrap__popup-media">
                   <img
@@ -401,7 +401,8 @@ export default function MapView({
                 <div className="mapwrap__popup-body">
                   <span className="mapwrap__popup-badge">
                     <span className="mapwrap__popup-dot" />
-                    {poi.kategoriLabel || KATEGORI[poi.kategori]?.label}
+                    {poi.layerNama}
+                    {poi.kategoriFitur && ` · ${poi.kategoriFitur}`}
                   </span>
                   <strong className="mapwrap__popup-title">{poi.nama}</strong>
                   <p className="mapwrap__popup-desc">{poi.deskripsi}</p>

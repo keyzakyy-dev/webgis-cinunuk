@@ -3,13 +3,9 @@ import { Link } from 'react-router-dom'
 import { API_URL } from '../data/siteConfig'
 import './Marquee.css'
 
-function kategoriForLayer(layerName) {
-  const n = (layerName || '').toLowerCase()
-  if (n.includes('sekolah')) return '#16a34a'
-  if (n.includes('ibadah') || n.includes('masjid')) return '#8b5cf6'
-  if (n.includes('puskesmas') || n.includes('kesehatan')) return '#f59e0b'
-  if (n.includes('kantor')) return '#dc2626'
-  return '#0891b2'
+function isValidPoi(feature) {
+  if (feature.layer_manajemen !== 'poi' && feature.layer_type !== 'point') return false
+  return Boolean(feature.is_active)
 }
 
 export default function Marquee() {
@@ -22,7 +18,7 @@ export default function Marquee() {
         const res = await fetch(`${API_URL}/api/features`)
         const json = await res.json()
         if (json?.success && !cancelled) {
-          setItems(json.data.filter((f) => f.is_active).slice(0, 30))
+          setItems(json.data.filter(isValidPoi).slice(0, 30))
         }
       } catch { /* offline — tampilkan kosong */ }
     })()
@@ -50,7 +46,7 @@ export default function Marquee() {
             >
               <span
                 className="marquee__dot"
-                style={{ background: kategoriForLayer(poi.layer_name) }}
+                style={{ background: poi.layer_warna || '#0891b2' }}
               />
               {poi.nama}
               <span className="marquee__cat">{poi.layer_name}</span>

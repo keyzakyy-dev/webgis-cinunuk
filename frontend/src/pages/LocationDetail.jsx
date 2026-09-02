@@ -9,51 +9,10 @@ import { buatIkonMarker } from '../components/markerIcon'
 import '../components/markerIcon.css'
 import './LocationDetail.css'
 
-const KATEGORI_META = {
-  pemerintahan: { label: 'Kantor Pemerintahan', warna: '#dc2626' },
-  pendidikan: { label: 'Fasilitas Pendidikan', warna: '#16a34a' },
-  kesehatan: { label: 'Fasilitas Kesehatan', warna: '#f59e0b' },
-  ibadah: { label: 'Tempat Ibadah', warna: '#8b5cf6' },
-  umum: { label: 'Fasilitas Umum', warna: '#0891b2' },
-}
-
-// Pemetaan slug nama layer ke kunci kategori
-const LAYER_KATEGORI = {
-  'sekolah': 'pendidikan',
-  'sekolah-dasar': 'pendidikan',
-  'sekolah-menengah': 'pendidikan',
-  'tempat-ibadah': 'ibadah',
-  'masjid': 'ibadah',
-  'mushola': 'ibadah',
-  'gereja': 'ibadah',
-  'puskesmas': 'kesehatan',
-  'fasilitas-kesehatan': 'kesehatan',
-  'posyandu': 'kesehatan',
-  'kantor-desa': 'pemerintahan',
-  'kantor-pemerintahan': 'pemerintahan',
-  'pemdes': 'pemerintahan',
-}
-
-function slug(name) {
-  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-}
-
-function kategoriForLayer(layer) {
-  const s = LAYER_KATEGORI[layer?.nama_layer?.toLowerCase().replace(/ /g, '-')]
-  if (s) return s
-  // map known layer labels
-  const n = (layer?.nama_layer || '').toLowerCase()
-  if (n.includes('sekolah')) return 'pendidikan'
-  if (n.includes('ibadah') || n.includes('masjid') || n.includes('gereja')) return 'ibadah'
-  if (n.includes('puskesmas') || n.includes('kesehatan')) return 'kesehatan'
-  if (n.includes('pemerintah') || n.includes('kantor')) return 'pemerintahan'
-  return 'umum'
-}
-
 function featureToDetail(f) {
-  const layerNama = f.layer_name || ''
-  const key = kategoriForLayer({ nama_layer: layerNama })
-  const meta = KATEGORI_META[key] || { label: layerNama || 'Lokasi', warna: f.layer_warna || '#0891b2' }
+  const layerNama = f.layer_name || 'Lokasi'
+  const layerWarna = f.layer_warna || '#0891b2'
+  const kategoriFitur = f.kategori || ''
 
   let lat = parseFloat(f.lat)
   let lng = parseFloat(f.lng)
@@ -63,7 +22,6 @@ function featureToDetail(f) {
       const g = typeof f.geometry === 'string' ? JSON.parse(f.geometry) : f.geometry
       if (g?.coordinates) {
         let c = g.coordinates
-        // Drill down to the first valid [lng, lat] pair for LineString/Polygon/MultiPolygon
         while (c && Array.isArray(c[0])) c = c[0]
         if (c && c.length >= 2) {
           lng = parseFloat(c[0])
@@ -73,21 +31,20 @@ function featureToDetail(f) {
     } catch {}
   }
 
-  // Jika tetap tidak ada, beri fallback koordinat default agar Leaflet tidak crash
   if (isNaN(lat) || isNaN(lng)) {
     lat = -7.17364
     lng = 107.970141
   }
 
   const foto = [f.foto_1, f.foto_2, f.foto_3].filter(Boolean)
-  const deskripsi = f.deskripsi || `${f.nama} merupakan lokasi di Desa ${SITE.desa}.`
+  const deskripsi = f.deskripsi || `${f.nama} merupakan lokasi pada layer ${layerNama} di Desa ${SITE.desa}.`
 
   return {
     id: f.id,
     nama: f.nama,
-    kategori: key,
-    kategoriColor: meta.warna,
-    kategoriLabel: meta.label,
+    layerNama,
+    layerWarna,
+    kategoriFitur,
     koordinat: [lat, lng],
     deskripsi,
     deskripsiLengkap: f.deskripsi_lengkap || deskripsi,
@@ -302,9 +259,16 @@ export default function LocationDetail() {
       </div>
 
       <header className="ld__head">
-        <span className="ld__badge" style={{ background: kat.warna }}>
-          {kat.label}
-        </span>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className="ld__badge" style={{ background: poi.layerWarna }}>
+            {poi.layerNama}
+          </span>
+          {poi.kategoriFitur && (
+            <span className="admin__chip admin__chip--soft" style={{ fontSize: '0.8rem', padding: '0.25rem 0.65rem' }}>
+              {poi.kategoriFitur}
+            </span>
+          )}
+        </div>
         <h1 className="ld__title">{poi.nama}</h1>
         <p className="ld__addr">{poi.alamat}</p>
       </header>
@@ -320,7 +284,7 @@ export default function LocationDetail() {
             <Foto
               src={poi.foto?.[active]}
               label={`Foto ${poi.nama}`}
-              warna={kat.warna}
+              warna={poi.layerWarna}
             />
             <span className="ld__gallery-zoom" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -526,7 +490,7 @@ export default function LocationDetail() {
               className="ld__minimap-canvas"
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={poi.koordinat} icon={buatIkonMarker(poi.kategoriColor || poi.kategori)}>
+              <Marker position={poi.koordinat} icon={buatIkonMarker(poi.layerWarna)}>
                 <Popup>{poi.nama}</Popup>
               </Marker>
             </MapContainer>
@@ -547,8 +511,8 @@ export default function LocationDetail() {
           </div>
           <div className="ld__related-grid">
             {lainnya.map((p, i) => {
-              const warna = p.kategoriColor || '#0891b2'
-              const label = p.kategoriLabel || 'Lokasi'
+              const warna = p.layerWarna || '#0891b2'
+              const label = p.layerNama || 'Lokasi'
               return (
                 <Link
                   key={p.id}
