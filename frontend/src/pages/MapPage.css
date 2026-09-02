@@ -2,7 +2,8 @@
   position: relative;
   display: grid;
   grid-template-columns: 320px 1fr;
-  height: calc(100vh - 72px);
+  height: calc(100vh - 64px);
+  height: calc(100dvh - 64px);
 }
 
 /* ── Panel kiri (docked) ─────────────────────────────────── */
@@ -337,12 +338,13 @@
 @media (max-width: 900px) {
   .mappage {
     grid-template-columns: 1fr;
-    height: auto;
+    height: calc(100vh - 58px);
+    height: calc(100dvh - 58px);
   }
 
   .mappage__map {
-    height: calc(100vh - 72px);
-    min-height: 400px;
+    height: 100%;
+    min-height: 100%;
   }
 
   .mappage__panel {
@@ -350,12 +352,14 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 300px;
-    max-width: 85vw;
-    z-index: 1200;
+    width: 290px;
+    max-width: 82vw;
+    z-index: 2000;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .mappage__panel--open {
@@ -364,28 +368,40 @@
 
   /* Search di tengah atas, beri ruang utk tombol kiri & kanan */
   .mappage__search {
-    top: 12px;
-    left: 60px;
-    right: 60px;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    left: 56px;
+    right: 56px;
     transform: none;
     width: auto;
   }
 
   /* Reopen button kiri atas */
   .mappage__reopen {
-    top: 12px;
-    left: 12px;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    left: 10px;
+    width: 36px;
+    height: 36px;
   }
 
   /* Layer trigger kanan atas, sejajar search */
   .layerpanel {
-    top: 12px;
-    right: 12px;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: 10px;
+  }
+
+  .layerpanel__trigger {
+    width: 36px;
+    height: 36px;
   }
 
   .layerpanel__dropdown {
-    width: min(220px, calc(100vw - 24px));
-    max-height: 55vh;
+    width: min(230px, calc(100vw - 20px));
+    max-height: 50vh;
+  }
+
+  .radiuspanel {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    left: 10px;
   }
 }
 

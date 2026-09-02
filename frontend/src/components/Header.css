@@ -97,16 +97,26 @@
 /* ── Responsive ─────────────────────────────────────────── */
 
 @media (max-width: 720px) {
+  .header__main-inner {
+    padding: 0.5rem 0.85rem;
+    gap: 0.5rem;
+  }
+
+  .header__logo-img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .header__identity strong {
+    font-size: 0.95rem;
+  }
+
   .header__identity small {
     display: none;
   }
 
-  .header__main-inner {
-    gap: 0.5rem;
-  }
-
   .header__chip {
-    padding: 0.45rem 0.95rem;
-    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78125rem;
   }
 }

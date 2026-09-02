@@ -636,23 +636,30 @@
   .hero__inner {
     flex-direction: column;
     min-height: auto;
-    padding-top: 2.5rem;
-    padding-bottom: 2.5rem;
-    gap: 1.75rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    gap: 1.5rem;
   }
 
   .hero__panel { max-width: 100%; }
+  .hero__title { font-size: clamp(2rem, 7.5vw, 3.5rem); margin-bottom: 1rem; }
+  .hero__tagline { font-size: 0.875rem; margin-bottom: 1.25rem; }
+  .hero__cta { padding: 0.75rem 1.4rem; font-size: 0.9rem; }
 
   .hero__shade {
     background: linear-gradient(
       to bottom,
-      rgba(28, 25, 23, 0.85) 0%,
-      rgba(28, 25, 23, 0.75) 100%
+      rgba(28, 25, 23, 0.88) 0%,
+      rgba(28, 25, 23, 0.78) 100%
     );
   }
 }
 
 @media (max-width: 720px) {
+  .guide, .about, .kontak {
+    padding: 3rem 1rem;
+  }
+
   .guide__steps {
     grid-template-columns: 1fr;
   }
@@ -663,10 +670,10 @@
 
   .about__grid {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 2rem;
   }
 
-  .about__card { position: static; }
+  .about__card { position: static; padding: 1.25rem; }
 
   .kontak__items {
     grid-template-columns: 1fr;
@@ -675,6 +682,8 @@
 
 @media (max-width: 640px) {
   .stats__inner { grid-template-columns: repeat(2, 1fr); }
+  .stats__item { padding: 1.25rem 0.85rem; }
+  .stats__num { font-size: 1.6rem; }
   .stats__item:nth-child(odd) { border-left: none; }
   .stats__item:nth-child(-n + 2) { border-bottom: 1px solid var(--border); }
 }

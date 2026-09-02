@@ -309,15 +309,26 @@
 
 @media (max-width: 900px) {
   .mapwrap__controls {
-    right: auto;
-    left: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom));
-    flex-direction: row;
-    gap: 8px;
+    right: 10px;
+    left: auto;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    gap: 6px;
+  }
+  .mapwrap__btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
   }
   .mapwrap__basemap-dropdown {
-    bottom: 48px;
-    right: auto;
-    left: 0;
+    bottom: 0;
+    right: 42px;
+    left: auto;
+    width: 145px;
+  }
+  .mapwrap__measure-panel {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    right: 10px;
+    width: 200px;
   }
 }
